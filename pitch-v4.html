@@ -1,0 +1,1947 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trendzo · Investor Deck</title>
+
+<style>
+/* TRENDZO · INVESTOR DECK v2
+   Built to be READ, not presented. Every slide carries its own argument.
+   Design DNA from consumer-app/src/theme/brutal.ts:
+     white ground, black ink, Helvetica Neue (Black for display),
+     zero corner radius, hairline #DED2F2 rules, dim #584470 support text,
+     green #6D28D9 as the single accent. No boxes, no borders, no shadows.
+   Stage is a fixed 1280x720 canvas scaled to the viewport. */
+
+@font-face {
+  font-family: 'HelveticaNeue';
+  src: url('assets/fonts/HelveticaNeue-Regular.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: block;
+}
+@font-face {
+  font-family: 'HelveticaNeue';
+  src: url('assets/fonts/HelveticaNeue-Medium.ttf') format('truetype');
+  font-weight: 500; font-style: normal; font-display: block;
+}
+@font-face {
+  font-family: 'HelveticaNeue';
+  src: url('assets/fonts/HelveticaNeue-Bold.ttf') format('truetype');
+  font-weight: 700; font-style: normal; font-display: block;
+}
+@font-face {
+  font-family: 'HelveticaBlack';
+  src: url('assets/fonts/HelveticaNeueBlack.ttf') format('truetype');
+  font-weight: 900; font-style: normal; font-display: block;
+}
+
+:root {
+  --bg:       #FFFFFF;
+  --ink:      #1E0B36;
+  --ink-soft: #2A1350;
+  --dim:      #584470;
+  --faint:    #C3B6D6;
+  --hairline: #DED2F2;
+  --wash:     #F4EFFC;
+  --green:    #6D28D9;
+  --green-wash: #EDE5FF;
+
+  --sans:  'HelveticaNeue', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --black: 'HelveticaBlack', 'HelveticaNeue', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  --pad-x: 60px;
+  --pad-y: 42px;
+
+  --fast: 180ms;
+  --base: 280ms;
+  --slow: 480ms;
+  --ease: cubic-bezier(.22,.61,.36,1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+/* Stage */
+#viewport {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+}
+#stage {
+  position: relative;
+  width: 1280px; height: 720px;
+  flex: 0 0 auto;
+  transform-origin: center center;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute; inset: 0;
+  padding: var(--pad-y) var(--pad-x);
+  display: flex; flex-direction: column;
+  background: var(--bg);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.slide.is-active { opacity: 1; visibility: visible; pointer-events: auto; }
+
+/* Entrance choreography */
+.slide [data-anim] { opacity: 0; transform: translateY(14px); }
+.slide.is-active [data-anim] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--slow) var(--ease) calc(var(--i, 0) * 55ms + 50ms),
+    transform var(--slow) var(--ease) calc(var(--i, 0) * 55ms + 50ms);
+}
+.slide [data-rule] { transform: scaleX(0); transform-origin: left center; }
+.slide.is-active [data-rule] {
+  transform: none;
+  transition: transform var(--slow) var(--ease) calc(var(--i, 0) * 55ms + 50ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide [data-anim], .slide [data-rule] { opacity: 1; transform: none; transition: none !important; }
+}
+
+/* ---------- Type scale ---------- */
+.kicker {
+  font-size: 11px; font-weight: 500; letter-spacing: 1.6px;
+  text-transform: uppercase; color: var(--dim);
+}
+.kicker .num { color: var(--ink); }
+
+h1.head {
+  font-family: var(--black);
+  font-size: 50px; line-height: 1.04; letter-spacing: -0.035em;
+  text-transform: uppercase; max-width: 780px;
+}
+h1.head.wide { max-width: 1030px; }
+h1.head.sm   { font-size: 40px; }
+
+.display {
+  font-family: var(--black);
+  font-size: 88px; line-height: 0.94; letter-spacing: -0.045em;
+  text-transform: uppercase;
+}
+
+.lead  { font-size: 19px; line-height: 1.55; color: var(--ink-soft); max-width: 46ch; }
+.body  { font-size: 15px; line-height: 1.6; color: var(--dim); }
+.body.ink { color: var(--ink-soft); }
+.micro {
+  font-size: 11px; line-height: 1.5; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--dim);
+}
+.micro.ink { color: var(--ink); }
+.micro.green { color: var(--green); }
+.term  { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
+.term.lg { font-size: 22px; }
+.green { color: var(--green); }
+.rule  { height: 1px; background: var(--hairline); width: 100%; }
+.statement {
+  font-size: 19px; line-height: 1.45; font-weight: 500; color: var(--ink-soft);
+  border-left: 1px solid var(--ink); padding-left: 15px; max-width: 66ch;
+}
+
+/* ---------- Slide chrome ---------- */
+.slide-head { display: flex; align-items: baseline; justify-content: space-between; }
+.slide-body { flex: 1; display: flex; flex-direction: column; padding-top: 44px; min-height: 0; }
+.slide.closing .slide-body { justify-content: center; padding-top: 0; }
+.slide-foot { display: flex; align-items: center; gap: 14px; }
+
+/* ---------- Layout primitives ---------- */
+.stack-6  { display: flex; flex-direction: column; gap: 6px; }
+.stack-10 { display: flex; flex-direction: column; gap: 10px; }
+.stack-16 { display: flex; flex-direction: column; gap: 16px; }
+.stack-24 { display: flex; flex-direction: column; gap: 24px; }
+.stack-32 { display: flex; flex-direction: column; gap: 32px; }
+
+.split    { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+.split-46 { display: grid; grid-template-columns: 0.86fr 1fr; gap: 64px; align-items: start; }
+.split-64 { display: grid; grid-template-columns: 1fr 0.7fr; gap: 64px; align-items: start; }
+.cols-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 56px; align-items: start; }
+.cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 44px; align-items: start; }
+.cols-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 36px; align-items: start; }
+.grow { flex: 1; min-height: 0; }
+
+/* Numbered rows, hairlines only */
+.rows { display: flex; flex-direction: column; }
+.row {
+  display: grid; grid-template-columns: 40px 1fr;
+  gap: 22px; padding: 17px 0;
+  border-top: 1px solid var(--hairline);
+}
+.row:last-child { border-bottom: 1px solid var(--hairline); }
+.row .idx {
+  font-family: var(--black); font-size: 13px; color: var(--faint); padding-top: 3px;
+}
+.row .txt { display: flex; flex-direction: column; gap: 5px; }
+.row .txt .body { max-width: 760px; }
+.row.tight { padding: 13px 0; }
+.row.plain { grid-template-columns: 1fr; gap: 5px; }
+
+/* Stat figures */
+.stats { display: flex; gap: 56px; align-items: flex-end; }
+.stat .fig {
+  font-family: var(--black); font-size: 50px; line-height: 1;
+  letter-spacing: -0.04em; color: var(--ink);
+}
+.stat .fig.small { font-size: 28px; letter-spacing: -0.03em; }
+.stat .fig.green { color: var(--green); }
+.stat .lab { margin-top: 8px; }
+
+/* ---------- Screenshots ---------- */
+.shots { display: flex; gap: 20px; align-items: flex-start; }
+.shot  { display: flex; flex-direction: column; gap: 10px; width: 214px; }
+.shot .frame { width: 214px; height: 448px; overflow: hidden; background: var(--wash); }
+.shot .frame img { width: 100%; display: block; margin-top: -17px; }
+.shot .cap { font-size: 10px; letter-spacing: 1.1px; text-transform: uppercase; color: var(--dim); }
+.shot.sm  { width: 176px; }
+.shot.sm .frame { width: 176px; height: 368px; }
+.shot.sm .frame img { margin-top: -14px; }
+.shot.ios .frame { height: 434px; }
+.shot.ios .frame img { margin-top: -26px; }
+.shot.sm.ios .frame { height: 356px; }
+.shot.sm.ios .frame img { margin-top: -23px; }
+
+/* Awaiting-capture slot. Deliberately loud, same rule as .insert. */
+.shot.app .frame img { margin-top: -19px; }
+.shot.md  { width: 208px; }
+.shot.md .frame { width: 208px; height: 436px; }
+.shot.md .frame img { margin-top: -17px; }
+
+.shot .frame.ph {
+  background: #EDE5FF; box-shadow: inset 0 0 0 1px #8B5CF6;
+  display: flex; align-items: center; justify-content: center;
+}
+.shot .frame.ph span {
+  font-size: 11px; line-height: 1.5; letter-spacing: 1px; text-transform: uppercase;
+  color: #7a4b00; font-weight: 700; text-align: center; padding: 0 16px;
+}
+.shot.xs  { width: 150px; }
+.shot.xs .frame { width: 150px; height: 314px; }
+.shot.xs .frame img { margin-top: -12px; }
+
+.screens { display: grid; grid-template-columns: 300px 1fr; gap: 52px; align-items: start; }
+.screens-r { display: grid; grid-template-columns: 1fr 300px; gap: 52px; align-items: start; }
+
+/* ---------- Diagram primitives ----------
+   Diagrams follow the deck's rules: hairline strokes, no fills except the
+   #F4EFFC wash, zero radius, green used once per diagram at the point that
+   matters. Text inside SVG inherits the deck's type scale via these classes. */
+.diagram { width: 100%; height: auto; display: block; flex: 0 0 auto; }
+.diagram text { font-family: var(--sans); fill: var(--ink); }
+.diagram .d-label {
+  font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; fill: var(--dim);
+}
+.diagram .d-title  { font-size: 13px; font-weight: 700; letter-spacing: -0.01em; fill: var(--ink); }
+.diagram .d-note   { font-size: 11px; fill: var(--dim); }
+.diagram .d-big    { font-family: var(--black); font-size: 22px; letter-spacing: -0.03em; fill: var(--ink); }
+.diagram .d-accent { fill: var(--green); }
+.diagram .d-faint  { fill: var(--faint); }
+/* Diagram strokes run a step darker than the page's own hairlines. A 1px
+   #DED2F2 line antialiases across two subpixel rows and lands near 1.08:1
+   on white, which makes structural strokes effectively invisible in a
+   render; crispEdges stops that halving. Page rules keep --hairline. */
+.diagram .s-hair   { stroke: #c9c9c9; stroke-width: 1; fill: none; shape-rendering: crispEdges; }
+.diagram .s-ink    { stroke: var(--ink); stroke-width: 1; fill: none; }
+.diagram .s-accent { stroke: var(--green); stroke-width: 1.5; fill: none; }
+.diagram .s-dash   { stroke: #a8a8a8; stroke-width: 1; fill: none; stroke-dasharray: 3 3; }
+.diagram .f-wash   { fill: var(--wash); }
+.diagram .f-green  { fill: var(--green-wash); }
+.diagram .f-ink    { fill: var(--ink); }
+.diagram .f-none   { fill: none; }
+
+/* Horizontal step flow, used where a diagram would be overkill */
+.flow { display: grid; gap: 0; align-items: stretch; }
+.flow-step { padding: 0 22px 0 0; display: flex; flex-direction: column; gap: 7px; position: relative; }
+.flow-step .n {
+  font-family: var(--black); font-size: 11px; color: var(--green); letter-spacing: 0.5px;
+}
+.flow-step .t { font-size: 14px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+.flow-step .d { font-size: 12px; line-height: 1.5; color: var(--dim); }
+.flow-rule { height: 1px; background: var(--hairline); margin-bottom: 14px; }
+.flow-rule.on { background: var(--ink); }
+
+/* Comparison columns — used for warehouse model vs ours */
+.versus { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.versus > div { padding: 0 40px; }
+.versus > div:first-child { padding-left: 0; border-right: 1px solid var(--hairline); }
+.versus > div:last-child { padding-right: 0; }
+
+/* Chips / tags */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-size: 10px; letter-spacing: 1.1px; text-transform: uppercase;
+  color: var(--dim); padding: 5px 9px; background: var(--wash);
+}
+.chip.on { background: var(--green-wash); color: var(--green); }
+
+/* Placeholder marker. This has to be the LOUDEST thing on a slide, not the
+   quietest: its whole job is to be impossible to ship by accident. Styled
+   deliberately against the deck's no-colour rule so it can never read as
+   finished design. Every one of these must be gone before sending. */
+.insert {
+  font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+  color: #7a4b00; font-weight: 700;
+  background: #EDE5FF; box-shadow: 0 0 0 1px #8B5CF6;
+  padding: 2px 7px; display: inline-block;
+}
+@media print { .insert { background: #EDE5FF !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+/* ---------- Cover ---------- */
+.cover { flex-direction: row; padding: 0; }
+.cover .left {
+  flex: 1; padding: var(--pad-y) var(--pad-x);
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.cover .art {
+  width: 452px; flex: 0 0 452px; position: relative; overflow: hidden; background: var(--wash);
+}
+.cover .art img {
+  width: 100%; height: 100%; object-fit: cover;
+  transform: scale(1.22); filter: grayscale(1) contrast(1.06);
+}
+.wordmark {
+  height: 26px; width: auto; align-self: flex-start; flex: 0 0 auto;
+  filter: invert(1);
+}
+.wordmark.lg { height: 46px; }
+.closing .display { max-width: 15ch; }
+
+/* ---------- Chrome ---------- */
+#footbar {
+  position: absolute; left: var(--pad-x); bottom: 26px; z-index: 5;
+  display: flex; align-items: center; gap: 20px;
+}
+#progress { display: flex; gap: 3px; align-items: center; }
+#progress i {
+  width: 10px; height: 5px; background: var(--hairline);
+  display: block; transition: background var(--fast) linear, width var(--base) var(--ease);
+}
+#progress i.on { background: var(--ink); width: 20px; }
+
+#counter {
+  position: absolute; right: var(--pad-x); bottom: 24px; z-index: 5;
+  font-size: 11px; letter-spacing: 1.4px; color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+#counter b { color: var(--ink); font-weight: 500; }
+
+.nav-zone { position: absolute; top: 0; bottom: 54px; width: 30%; z-index: 4; cursor: pointer; }
+.nav-zone.prev { left: 0; }
+.nav-zone.next { right: 0; width: 70%; }
+
+#index {
+  position: absolute; inset: 0; z-index: 20; background: var(--bg);
+  padding: var(--pad-y) var(--pad-x);
+  display: none; flex-direction: column;
+}
+#index.open { display: flex; }
+#index .grid { margin-top: 22px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 52px; }
+#index button {
+  all: unset; cursor: pointer; display: grid; grid-template-columns: 28px 1fr;
+  gap: 12px; padding: 11px 0; border-top: 1px solid var(--hairline);
+  font-family: var(--sans);
+}
+#index button:last-child { border-bottom: 1px solid var(--hairline); }
+#index button .n { font-family: var(--black); font-size: 12px; color: var(--faint); }
+#index button .t { font-size: 13px; font-weight: 500; color: var(--ink-soft); letter-spacing: -0.01em; }
+#index button:hover .t, #index button:hover .n { color: var(--ink); }
+#index button.cur .n, #index button.cur .t { color: var(--green); }
+
+#hint {
+  font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--faint);
+  transition: opacity var(--slow) linear;
+}
+#hint.gone { opacity: 0; }
+.slide.cover.is-active ~ #counter { opacity: 0; }
+.slide.cover.is-active ~ #footbar #hint { opacity: 0; }
+
+/* ---------- Print / PDF ---------- */
+@page { size: 1280px 720px; margin: 0; }
+@media print {
+  html, body { overflow: visible; height: auto; }
+  #viewport { position: static; display: block; }
+  #stage { transform: none !important; width: 1280px; height: auto; overflow: visible; }
+  .slide {
+    position: relative; inset: auto;
+    width: 1280px; height: 720px;
+    opacity: 1 !important; visibility: visible !important;
+    page-break-after: always; break-after: page;
+  }
+  .slide [data-anim], .slide [data-rule] { opacity: 1 !important; transform: none !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  #footbar, #counter, #index, .nav-zone { display: none !important; }
+}
+
+/* ===== v4 restyle: white ground, dark-purple gradient stops, grain, glass ===== */
+#viewport{background:#EFEAF7}
+#stage{background:#FFFFFF}
+
+.slide{
+  background:
+    radial-gradient(112% 82% at 96% -14%, rgba(76,29,149,.26), transparent 56%),
+    radial-gradient(78% 60% at -8% 108%, rgba(59,17,120,.16), transparent 58%),
+    linear-gradient(180deg,#FFFFFF 0%,#FBF8FF 100%);
+}
+.slide:nth-of-type(even){
+  background:
+    radial-gradient(92% 64% at 50% 118%, rgba(76,29,149,.26), transparent 60%),
+    radial-gradient(62% 48% at 4% -8%, rgba(109,40,217,.14), transparent 56%),
+    linear-gradient(180deg,#FFFFFF 0%,#F9F5FF 100%);
+}
+.slide::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:9;
+  opacity:.15;mix-blend-mode:multiply;background-size:170px 170px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='170' height='170' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* glass panels — added without shifting any content (padding offset by margin) */
+.rows{
+  background:linear-gradient(135deg,rgba(109,40,217,.10),rgba(255,255,255,.62));
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  border:1px solid rgba(109,40,217,.20);border-radius:18px;
+  box-shadow:0 16px 40px rgba(59,17,120,.14), inset 0 1px 0 rgba(255,255,255,.9);
+  padding:2px 22px;margin:0 -22px;
+}
+.rows .row:first-child{border-top:0}
+.rows .row:last-child{border-bottom:0}
+
+.shot .frame{
+  border-radius:14px;overflow:hidden;
+  border:1px solid rgba(109,40,217,.20);
+  box-shadow:0 18px 42px rgba(59,17,120,.20), inset 0 1px 0 rgba(255,255,255,.7);
+}
+
+/* ---- cover: models image, Trendzo logo centred, nothing else ---- */
+.slide.cover{padding:0;background:#FFFFFF}
+.slide.cover::after{display:none}
+.v4-cover-full{position:absolute;inset:0;overflow:hidden;z-index:1}
+.v4-cover-full img{width:100%;height:100%;object-fit:cover;object-position:50% 28%;display:block}
+
+
+/* ---- closing thank-you: centred stack, oversized wordmark ---- */
+.slide.v4-thanks{align-items:center;justify-content:center;text-align:center}
+.v4-thanks-inner{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center}
+.v4-thanks .hello{font-size:13px;font-weight:500;letter-spacing:2.2px;
+  text-transform:uppercase;color:#584470}
+.v4-wordmark{display:block;width:600px;height:92px;object-fit:contain;
+  margin:30px 0 42px}
+.v4-thanks .who{font-size:19px;line-height:1.65;color:#2A1350}
+.v4-thanks .links{display:flex;gap:22px;align-items:center;margin-top:34px;font-size:15px}
+.v4-thanks .links a,.v4-thanks .links b{font-weight:400;color:#6D28D9;text-decoration:none}
+.v4-thanks .links a:hover{text-decoration:underline}
+.v4-thanks .links i{font-style:normal;color:#C3B6D6}
+.v4-thanks .copy{margin-top:40px;font-size:11px;letter-spacing:.4px;color:#584470}
+
+</style>
+</head>
+
+<body>
+<div id="viewport">
+<div id="stage">
+
+<!-- SLIDES-START -->
+
+  <!-- 01 · COVER -->
+  <section class="slide cover is-active" data-title="Cover">
+  <!-- ASSET SLOT: finished cover artwork -->
+  <figure class="v4-cover-full"><img src="assets/cover.png" alt="" /></figure>
+</section>
+
+
+  <!-- ==== SHIFT ==== -->
+<!-- 01 · THE SHIFT -->
+
+<section class="slide" data-title="What changed">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">01</span> &nbsp;The shift</div>
+  </div>
+
+  <div class="slide-body stack-24">
+
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">What changed</h1>
+      <p class="statement" data-anim style="--i:2">India learned to expect things in minutes. That expectation is not going back.</p>
+    </div>
+
+    <!-- Columns are drawn to the lower bound of each published range, on one
+         shared baseline, so the doubling is read off the height directly. -->
+    <svg class="diagram" viewBox="0 0 1160 250" width="100%" preserveAspectRatio="xMidYMid meet"
+         role="img" data-anim style="--i:3"
+         aria-label="India's quick-commerce GMV: 2.5 billion dollars in 2023, 4.8 to 5 billion in 2024, and 10 to 11 billion in 2025 — roughly doubling in each of the last two years.">
+      <text class="d-label" x="0" y="12">INDIA&rsquo;S QUICK-COMMERCE GMV, US$</text>
+
+      <line class="s-hair" x1="0" y1="212" x2="1160" y2="212" />
+
+      <rect class="s-hair f-wash" x="60"  y="171" width="180" height="41" />
+      <text class="d-big"   x="150" y="160" text-anchor="middle">$2.5B</text>
+      <text class="d-label" x="150" y="232" text-anchor="middle">2023</text>
+
+      <rect class="s-hair f-wash" x="340" y="133" width="180" height="79" />
+      <text class="d-big"   x="430" y="122" text-anchor="middle">$4.8&ndash;5B</text>
+      <text class="d-label" x="430" y="232" text-anchor="middle">2024</text>
+
+      <rect class="f-green s-accent" x="620" y="47" width="180" height="165" />
+      <text class="d-big d-accent" x="710" y="36" text-anchor="middle">$10&ndash;11B</text>
+      <text class="d-label" x="710" y="232" text-anchor="middle">2025</text>
+
+      <text class="d-title" x="880" y="132">Doubled, then</text>
+      <text class="d-title" x="880" y="154">doubled again.</text>
+      <text class="d-note"  x="880" y="180">Two years, four times the volume.</text>
+    </svg>
+
+    <div class="stack-16" data-anim style="--i:4">
+      <div class="rule"></div>
+      <div class="cols-3">
+        <div class="stat">
+          <div class="fig">16&ndash;17%</div>
+          <div class="lab micro">Of India&rsquo;s e-retail GMV &mdash; China is 5&ndash;7%</div>
+        </div>
+        <div class="stat">
+          <div class="fig">~8&times;</div>
+          <div class="lab micro">More visits end in a purchase than on ordinary shopping apps</div>
+        </div>
+        <div class="stat">
+          <div class="fig">35&ndash;40M</div>
+          <div class="lab micro">Monthly shoppers, of 290&ndash;300M online</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack-10" data-anim style="--i:5">
+      <p class="body ink">Fashion followed within a year &mdash; Myntra M-Now, Flipkart Minutes and Amazon Now all opened 30-minute fashion inside roughly twelve months of each other.</p>
+      <p class="micro">Bain &amp; Company / Flipkart, How India Shops Online 2026 &middot; conversion and session data, Metro / Tier 1, 2025</p>
+    </div>
+
+  </div>
+</section>
+
+<section class="slide" data-title="Where it stopped">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">02</span> &nbsp;The gap</div>
+  </div>
+
+  <div class="slide-body stack-24">
+
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">Where it stopped</h1>
+      <p class="statement" data-anim style="--i:2">Quick commerce reached the kitchen, not the wardrobe.</p>
+    </div>
+
+    <!-- One scale throughout: 1 percentage point = 10 units of width, so the
+         fashion bar is exactly one seventieth of the grocery bar. -->
+    <svg class="diagram" viewBox="0 0 1160 246" width="100%" preserveAspectRatio="xMidYMid meet"
+         role="img" data-anim style="--i:3"
+         aria-label="Two measures. First, the share of each category's online GMV that ran through quick commerce in India in 2025: grocery about 70 percent, beauty 18, home 10, mobiles and electronics 3, and fashion about 1 percent. Second, how much of all fashion retail in India is bought online at all: about 19 percent, leaving about 81 percent still bought in a shop.">
+      <text class="d-label" x="0" y="10">SHARE OF EACH CATEGORY&rsquo;S ONLINE GMV THAT RAN THROUGH QUICK COMMERCE &middot; INDIA, 2025</text>
+
+      <text class="d-title" x="190" y="41" text-anchor="end">Grocery</text>
+      <rect class="s-hair f-wash" x="200" y="26" width="700" height="20" />
+      <text class="d-big" x="916" y="44">~70%</text>
+
+      <text class="d-title" x="190" y="71" text-anchor="end">Beauty</text>
+      <rect class="s-hair f-wash" x="200" y="56" width="180" height="20" />
+      <text class="d-title" x="396" y="71">~18%</text>
+
+      <text class="d-title" x="190" y="101" text-anchor="end">Home</text>
+      <rect class="s-hair f-wash" x="200" y="86" width="100" height="20" />
+      <text class="d-title" x="316" y="101">~10%</text>
+
+      <text class="d-title" x="190" y="131" text-anchor="end">Electronics</text>
+      <rect class="s-hair f-wash" x="200" y="116" width="30" height="20" />
+      <text class="d-title" x="246" y="131">~3%</text>
+
+      <text class="d-title" x="190" y="161" text-anchor="end">Fashion</text>
+      <rect class="f-green s-accent" x="200" y="146" width="10" height="20" />
+      <text class="d-big d-accent" x="226" y="164">~1%</text>
+      <text class="d-note" x="310" y="164">of the fashion that is already sold online</text>
+
+      <line class="s-hair" x1="0" y1="192" x2="1160" y2="192" />
+
+      <text class="d-label" x="0" y="212">AND HOW MUCH OF ALL FASHION IN INDIA IS BOUGHT ONLINE AT ALL</text>
+      <rect class="s-hair" x="0" y="223" width="1160" height="20" />
+      <rect class="f-ink" x="0" y="223" width="220" height="20" />
+      <text class="d-title" x="236" y="238">~19% online</text>
+      <text class="d-note" x="352" y="238">&mdash; the other ~81% of fashion is still bought in a shop</text>
+    </svg>
+
+    <div class="stack-16" data-anim style="--i:4">
+      <div class="rule"></div>
+      <div class="cols-3">
+        <div class="stat">
+          <div class="fig">81%</div>
+          <div class="lab micro">Buy clothes in a shop to touch, feel and try</div>
+        </div>
+        <div class="stat">
+          <div class="fig">24%</div>
+          <div class="lab micro">Of pay-on-delivery orders come back &mdash; 10% prepaid</div>
+        </div>
+        <div class="stat">
+          <div class="fig">#1</div>
+          <div class="lab micro">Fashion is India&rsquo;s most-returned category</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack-10" data-anim style="--i:5">
+      <p class="body ink">Fast fashion delivery already exists here &mdash; M-Now, Slikk, Blip, AJIO Rush, ZILO. Every one of them runs on dark stores, and every one of them is metro-only. Tier 2 and 3 already buy fashion online &mdash; on industry estimates, more than half of India&rsquo;s fashion e-commerce demand. They simply wait days for it.</p>
+      <p class="micro">Bain &amp; Company / Flipkart 2026 &middot; LocalCircles, April 2024 &middot; Unicommerce, 2024 &middot; Redseer</p>
+    </div>
+
+  </div>
+</section>
+
+<section class="slide" data-title="How the order moves">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">03</span> &nbsp;How we work</div>
+  </div>
+
+  <div class="slide-body stack-32">
+
+    <div class="stack-16">
+      <h1 class="head" data-anim style="--i:1">How an order moves</h1>
+      <p class="statement" data-anim style="--i:2">No warehouse. The shop around the corner.</p>
+    </div>
+
+    <div data-anim style="--i:3">
+      <svg class="diagram" viewBox="0 0 1112 328" width="100%" height="328" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Three lanes: shopper, agent, store. The shopper orders; the order routes down to the nearest store that has the item and is open; a salaried zone-assigned agent picks it up; at the door the shopper and agent are in the same place at the same moment and the shopper tries on while the agent waits; the shopper keeps what fits and the rest travels back with the agent to the store it came from. Order to door is promised inside 60 minutes.">
+        <defs>
+          <marker id="arw-s03" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0 0 L10 5 L0 10 Z" class="f-ink" />
+          </marker>
+        </defs>
+
+        <!-- time span: order to door -->
+        <text class="d-label" x="501" y="12" text-anchor="middle">60 minutes &middot; order to door</text>
+        <path d="M188 22 H400" class="s-ink" />
+        <path d="M602 22 H814" class="s-ink" />
+        <path d="M188 17 V27" class="s-ink" />
+        <path d="M814 17 V27" class="s-ink" />
+
+        <!-- legend -->
+        <path d="M900 8 H930" class="s-ink" />
+        <text class="d-label" x="938" y="12">Order and goods</text>
+        <path d="M900 24 H930" class="s-ink" stroke-dasharray="5 4" />
+        <text class="d-label" x="938" y="28">Returned goods</text>
+
+        <!-- lane grid -->
+        <path d="M0 38 H1112" class="s-hair" />
+        <path d="M0 126 H1112" class="s-hair" />
+        <path d="M0 214 H1112" class="s-hair" />
+        <path d="M0 302 H1112" class="s-hair" />
+        <text class="d-label" x="0" y="85">Shopper</text>
+        <text class="d-label" x="0" y="173">Agent</text>
+        <text class="d-label" x="0" y="261">Store</text>
+
+        <!-- 01 shopper orders -->
+        <rect x="100" y="45" width="175" height="74" class="f-wash s-hair" />
+        <text class="d-title" x="114" y="63">01 ORDERS</text>
+        <text class="d-note"  x="114" y="80">Swipe reels, add to cart.</text>
+        <text class="d-note"  x="114" y="96">AI try-on: the garment</text>
+        <text class="d-note"  x="114" y="112">on the shopper&rsquo;s photo.</text>
+
+        <path d="M275 82 H292 V258 H305" class="s-ink" marker-end="url(#arw-s03)" />
+
+        <!-- 02 the nearest store: the deck's one accent -->
+        <rect x="309" y="221" width="175" height="74" class="f-green s-accent" />
+        <text class="d-title" x="323" y="239">02 NEAREST STORE</text>
+        <text class="d-note"  x="323" y="256">Has the item. Open now.</text>
+        <text class="d-note"  x="323" y="272">Closest to the address.</text>
+        <text class="d-note"  x="323" y="288">Routed automatically.</text>
+
+        <path d="M484 258 H501 V170 H514" class="s-ink" marker-end="url(#arw-s03)" />
+
+        <!-- 03 agent picks up -->
+        <rect x="518" y="133" width="175" height="74" class="f-wash s-hair" />
+        <text class="d-title" x="532" y="151">03 PICKS UP</text>
+        <text class="d-note"  x="532" y="168">Employed and salaried.</text>
+        <text class="d-note"  x="532" y="184">Assigned to one zone.</text>
+        <text class="d-note"  x="532" y="200">Collects at the counter.</text>
+
+        <path d="M693 170 H723" class="s-ink" marker-end="url(#arw-s03)" />
+
+        <!-- 04 the door: deliberately spans the shopper and agent lanes -->
+        <rect x="727" y="45" width="175" height="162" class="f-wash s-hair" />
+        <text class="d-title" x="741" y="97">04 AT THE DOOR</text>
+        <text class="d-note"  x="741" y="114">Shopper and agent, one</text>
+        <text class="d-note"  x="741" y="130">doorway, one moment.</text>
+        <text class="d-note"  x="741" y="146">Try-and-buy: they try on</text>
+        <text class="d-note"  x="741" y="162">while the agent waits.</text>
+
+        <path d="M902 82 H932" class="s-ink" marker-end="url(#arw-s03)" />
+
+        <!-- 05 keeps what fits -->
+        <rect x="936" y="45" width="175" height="74" class="f-wash s-hair" />
+        <text class="d-title" x="950" y="63">05 KEEPS WHAT FITS</text>
+        <text class="d-note"  x="950" y="80">Prepaid, no cash.</text>
+        <text class="d-note"  x="950" y="96">The rest is handed back</text>
+        <text class="d-note"  x="950" y="112">to the agent, same trip.</text>
+
+        <!-- the rest travels back down the lanes to the shelf it left -->
+        <path d="M1023 119 V285 H490" class="s-ink" stroke-dasharray="5 4" marker-end="url(#arw-s03)" />
+        <text class="d-note" x="1015" y="174" text-anchor="end">carried by the agent</text>
+        <text class="d-note" x="756" y="277" text-anchor="middle">Returns go back to the store they came from.</text>
+
+        <!-- footing -->
+        <text class="d-note" x="0" y="320">Retailer paid fortnightly &mdash; the 14th and the last day of each month.</text>
+        <text class="d-note" x="1112" y="320" text-anchor="end">Every order, return, stock move and payout is a permanent event.</text>
+      </svg>
+    </div>
+
+    <p class="body ink" data-anim style="--i:4">Trendzo owns no stock. The catalog is only as deep as the shelves nearby &mdash; that is the model, not a gap in it.</p>
+
+  </div>
+</section>
+
+<section class="slide" data-title="For retailers">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">04</span> &nbsp;For retailers</div>
+  </div>
+  <div class="slide-body stack-24">
+
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">Listing a product</h1>
+      <p class="statement" data-anim style="--i:2">From a phone photo to a live listing.</p>
+    </div>
+
+    <div class="screens-r">
+
+      <div class="stack-24">
+
+        <svg class="diagram" data-anim style="--i:3" viewBox="0 0 760 156" width="100%" height="156" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Retailer listing pipeline in four steps: capture phone photos, generate AI mockups from them, create the product record where the stock count lives and where the free counter POS writes, then go live and become sellable in the app. Photography is the barrier the pipeline removes, and stock never leaves the retailer's own shelf.">
+          <defs>
+            <marker id="arw-s04a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+              <path class="s-ink" d="M0 0 L8 4 L0 8" />
+            </marker>
+          </defs>
+
+          <text class="d-label" x="0" y="15">01 &#183; CAPTURE</text>
+          <rect class="s-hair f-wash" x="0" y="26" width="170" height="100" />
+          <text class="d-title" x="14" y="52">Phone photos</text>
+          <text class="d-note" x="14" y="74">Front required. Back and</text>
+          <text class="d-note" x="14" y="90">close-ups: pattern, logo,</text>
+          <text class="d-note" x="14" y="106">brand tag.</text>
+          <path class="s-ink" d="M176 76 H191" marker-end="url(#arw-s04a)" />
+
+          <text class="d-label" x="197" y="15">02 &#183; GENERATE</text>
+          <rect class="s-accent f-green" x="197" y="26" width="170" height="100" />
+          <text class="d-title" x="211" y="52">AI mockups</text>
+          <text class="d-note" x="211" y="74">Listing-ready images</text>
+          <text class="d-note" x="211" y="90">from one phone shot.</text>
+          <path class="s-ink" d="M373 76 H388" marker-end="url(#arw-s04a)" />
+
+          <text class="d-label" x="394" y="15">03 &#183; LIST</text>
+          <rect class="s-hair f-wash" x="394" y="26" width="170" height="100" />
+          <text class="d-title" x="408" y="52">Product record</text>
+          <text class="d-note" x="408" y="74">Variants, sizes, price.</text>
+          <text class="d-note" x="408" y="90">The free counter POS</text>
+          <text class="d-note" x="408" y="106">writes to the same count.</text>
+          <path class="s-ink" d="M570 76 H584" marker-end="url(#arw-s04a)" />
+
+          <text class="d-label" x="590" y="15">04 &#183; LIVE</text>
+          <rect class="s-hair f-wash" x="590" y="26" width="170" height="100" />
+          <text class="d-title" x="604" y="52">Sellable in the app</text>
+          <text class="d-note" x="604" y="74">One toggle opens the</text>
+          <text class="d-note" x="604" y="90">store. Routing can then</text>
+          <text class="d-note" x="604" y="106">send it an order.</text>
+
+          <text class="d-note" x="0" y="150">No photographer. No studio. No shoot day.</text>
+          <text class="d-note" x="760" y="150" text-anchor="end">Stock stays on the retailer&rsquo;s own shelf. Nothing is consigned.</text>
+        </svg>
+
+        <div class="rows" data-anim style="--i:4">
+          <div class="row tight">
+            <span class="idx">01</span>
+            <div class="txt">
+              <span class="term">A full rack at once</span>
+              <p class="body">Bulk mode queues mockups for many products in one pass. Marked beta in the current build.</p>
+            </div>
+          </div>
+          <div class="row tight">
+            <span class="idx">02</span>
+            <div class="txt">
+              <span class="term">One toggle takes the store live</span>
+              <p class="body">Online means accepting orders. Off, and routing skips the store &#8212; no order it cannot fill.</p>
+            </div>
+          </div>
+          <div class="row tight">
+            <span class="idx">03</span>
+            <div class="txt">
+              <span class="term">Earnings, payouts, full ops</span>
+              <p class="body">Amount owed and the next payout sit in the app, also beta. Billing and orders in the web portal.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="shots" data-anim style="--i:5">
+        <div class="shot md">
+          <div class="frame"><img src="assets/screens/retailer1.jpg" alt="Retailer app home screen: Trendzo Studio, Create Mockups Instantly, an online toggle set to accepting orders, and a New Mockup card reading capture then generate." /></div>
+          <span class="cap">Studio home &#183; test account</span>
+        </div>
+      </div>
+
+    </div>
+
+
+  </div>
+</section>
+
+<section class="slide" data-title="AI catalog, end to end">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">04</span> &nbsp;For retailers</div>
+  </div>
+
+  <div class="slide-body stack-24">
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">How mockups get made</h1>
+      <p class="statement" data-anim style="--i:2">Phone snap in. Studio catalog out.</p>
+    </div>
+
+    <div class="shots" data-anim style="--i:3">
+      <div class="shot ios">
+        <div class="frame"><img src="assets/screens/ai2-capture.jpg" alt="Front and back garment photos taken on a phone" /></div>
+        <span class="cap">01 &middot; Phone photos</span>
+      </div>
+      <div class="shot ios">
+        <div class="frame"><img src="assets/screens/ai3-configure.jpg" alt="Configure step: product, male or female, optional prompt" /></div>
+        <span class="cap">02 &middot; Configure</span>
+      </div>
+      <div class="shot ios">
+        <div class="frame"><img src="assets/screens/ai4-generating.jpg" alt="Generating the mockups" /></div>
+        <span class="cap">03 &middot; Generate</span>
+      </div>
+      <div class="shot ios">
+        <div class="frame"><img src="assets/screens/ai5-results.jpg" alt="Five generated studio mockups ready to approve and publish" /></div>
+        <span class="cap green">04 &middot; Five studio shots</span>
+      </div>
+      <div class="shot ios">
+        <div class="frame"><img src="assets/screens/ai1-studio.jpg" alt="Studio home showing published products and average price" /></div>
+        <span class="cap">05 &middot; Live, priced</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-title="For shoppers">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">05</span> &nbsp;For shoppers</div>
+  </div>
+  <div class="slide-body stack-24">
+
+    <div class="stack-6">
+      <h1 class="head sm" data-anim style="--i:1">From discovery to doorstep</h1>
+      <p class="statement" data-anim style="--i:2">Every step removes a reason to hesitate.</p>
+    </div>
+
+    <svg class="diagram" viewBox="0 0 1112 100" width="100%" height="100"
+         preserveAspectRatio="xMidYMid meet" role="img" data-anim style="--i:3"
+         aria-label="Six-step shopper journey along a line. Under each step, the friction it removes is struck out: knowing what to search for, whether it will look right, a separate order per store, the multi-day wait, guessing the size, reverse-pickup limbo. Steps one to four are marked table stakes; the last two are the door moment.">
+      <defs>
+        <marker id="arw-s05a" viewBox="0 0 10 10" refX="9" refY="5"
+                markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 1 L9 5 L0 9 Z" class="f-ink"/>
+        </marker>
+      </defs>
+
+      <text class="d-label" x="0" y="16">THE STEP</text>
+      <text class="d-label" x="0" y="55">WHAT IT</text>
+      <text class="d-label" x="0" y="69">REMOVES</text>
+
+      <line class="s-ink" x1="0" y1="36" x2="1098" y2="36" marker-end="url(#arw-s05a)"/>
+
+      <text class="d-title" x="118" y="16">Discover in reels</text>
+      <line class="s-hair" x1="118" y1="22" x2="118" y2="50"/>
+      <rect class="f-ink" x="114.5" y="32.5" width="7" height="7"/>
+      <text class="d-note" x="118" y="62">Knowing what to search for</text>
+      <line class="s-ink" x1="118" y1="58" x2="253" y2="58"/>
+
+      <text class="d-title" x="284" y="16">See it on yourself</text>
+      <line class="s-hair" x1="284" y1="22" x2="284" y2="50"/>
+      <rect class="f-ink" x="280.5" y="32.5" width="7" height="7"/>
+      <text class="d-note" x="284" y="62">Will it look right on me</text>
+      <line class="s-ink" x1="284" y1="58" x2="393" y2="58"/>
+
+      <text class="d-title" x="450" y="16">Checkout once</text>
+      <line class="s-hair" x1="450" y1="22" x2="450" y2="50"/>
+      <rect class="f-ink" x="446.5" y="32.5" width="7" height="7"/>
+      <text class="d-note" x="450" y="62">A separate order per store</text>
+      <line class="s-ink" x1="450" y1="58" x2="579" y2="58"/>
+
+      <text class="d-title" x="616" y="16">60 minutes to the door</text>
+      <line class="s-hair" x1="616" y1="22" x2="616" y2="50"/>
+      <rect class="f-ink" x="612.5" y="32.5" width="7" height="7"/>
+      <text class="d-note" x="616" y="62">The multi-day wait</text>
+      <line class="s-ink" x1="616" y1="58" x2="707" y2="58"/>
+
+      <text class="d-title" x="782" y="16">Try it at the door</text>
+      <line class="s-hair" x1="782" y1="22" x2="782" y2="50"/>
+      <rect class="f-ink" x="778.5" y="32.5" width="7" height="7"/>
+      <text class="d-note" x="782" y="62">Guessing the size</text>
+      <line class="s-ink" x1="782" y1="58" x2="869" y2="58"/>
+
+      <text class="d-title" x="948" y="16">Keep what fits</text>
+      <line class="s-hair" x1="948" y1="22" x2="948" y2="50"/>
+      <rect class="f-ink" x="944.5" y="32.5" width="7" height="7"/>
+      <text class="d-note" x="948" y="62">Reverse-pickup limbo</text>
+      <line class="s-ink" x1="948" y1="58" x2="1056" y2="58"/>
+
+      <path class="s-dash" d="M118 76 L118 82 L766 82 L766 76"/>
+      <text class="d-label" x="118" y="96">TABLE STAKES</text>
+      <text class="d-note" x="222" y="96">Discovery, cart and speed. We have to clear these.</text>
+
+      <path class="s-accent" d="M782 76 L782 82 L1104 82 L1104 76"/>
+      <text class="d-label d-accent" x="782" y="96">THE DOOR MOMENT</text>
+    </svg>
+
+    <div class="split-64">
+
+      <div class="stack-24">
+        <div class="rows" data-anim style="--i:4">
+          <div class="row tight">
+            <span class="idx">01</span>
+            <div class="txt">
+              <span class="term">60 minutes, not three days</span>
+              <span class="body">From a shop near you, not a warehouse in another city.</span>
+            </div>
+          </div>
+          <div class="row tight">
+            <span class="idx">02</span>
+            <div class="txt">
+              <span class="term">Certain before you pay</span>
+              <span class="body">Two ways to try first &mdash; on your screen, and at your door.</span>
+            </div>
+          </div>
+          <div class="row tight">
+            <span class="idx">03</span>
+            <div class="txt">
+              <span class="term">One cart, every nearby store</span>
+              <span class="body">Items from several local shops check out as a single order.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack-10" data-anim style="--i:5">
+          <div class="rule"></div>
+          <div class="micro">React Native, running on device against the live catalog, with the payment gateway integrated. Full status on the build slide.</div>
+        </div>
+      </div>
+
+      <div class="shots" data-anim style="--i:6">
+        <div class="shot xs">
+          <div class="frame"><img src="assets/screens/consumer2.jpg" alt="Trendzo consumer app Category screen on the HER side: search field, women's category tiles including Wide Leg Denim, Sun Dress, Bags and Matching Sets, and a full-width black VIEW HIM bar above the Home, Reel, Category and Bag nav."></div>
+          <span class="cap">Category browse</span>
+        </div>
+        <div class="shot xs">
+          <div class="frame"><img src="assets/screens/consumer3.jpg" alt="Trendzo consumer app browse screen: the line 'Tap a look and try it on yourself' above a TRY AND BUY card, then EXPLORE MORE with Sort and Filter controls and a product grid."></div>
+          <span class="cap">Browse &middot; Try and Buy</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<section class="slide" data-title="The shopper app">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">05</span> &nbsp;For shoppers</div>
+  </div>
+
+  <div class="slide-body stack-24">
+
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">The shopper app</h1>
+      <p class="statement" data-anim style="--i:2">Open it in Indore and it opens on how many shops near you have it.</p>
+    </div>
+
+    <div class="shots" data-anim style="--i:3">
+      <div class="shot app">
+        <div class="frame"><img src="assets/screens/app1-home.jpg" alt="Shopper app home: Trendzo, 60 minutes, three stores nearby, Indore 452018." /></div>
+        <span class="cap">01 &middot; 60 minutes, shops nearby</span>
+      </div>
+      <div class="shot app">
+        <div class="frame"><img src="assets/screens/app2-reels.jpg" alt="Reel feed with a styling video and engagement counts." /></div>
+        <span class="cap">02 &middot; Discovery in reels</span>
+      </div>
+      <div class="shot app">
+        <div class="frame"><img src="assets/screens/app3-tryon.jpg" alt="Product page with price, an offer, and a Try On camera button." /></div>
+        <span class="cap green">03 &middot; Try it on from any product</span>
+      </div>
+      <div class="shot app">
+        <div class="frame"><img src="assets/screens/app4-bag.jpg" alt="Bag showing an express sixty minute order with a live estimate." /></div>
+        <span class="cap">04 &middot; Bag, with a live estimate</span>
+      </div>
+      <div class="shot app">
+        <div class="frame"><img src="assets/screens/app5-checkout.jpg" alt="Review order showing express, try and buy, and store pickup delivery choices." /></div>
+        <span class="cap">05 &middot; Three ways to receive it</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="slide" data-title="The door moment">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">06</span> &nbsp;The door moment</div>
+    </div>
+
+    <div class="slide-body stack-24">
+
+      <div class="stack-10">
+        <h1 class="head sm" data-anim style="--i:1">How try-and-buy works</h1>
+        <p class="statement" data-anim style="--i:2">The sale closes at the door.</p>
+      </div>
+
+      <svg class="diagram" viewBox="0 0 1112 292" width="100%" height="292" preserveAspectRatio="xMidYMid meet" role="img" aria-label="A try-and-buy order at the door: the agent waits, each item is kept or handed back, and anything handed back travels to the store, is recorded, refunded to the way it was paid, and settled on the retailer statement." data-anim style="--i:3">
+        <defs>
+          <marker id="arw-s06" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0.5,1 L7,4 L0.5,7 Z" class="f-ink" />
+          </marker>
+        </defs>
+
+        <!-- ---------- BAND 1 · at the door ---------- -->
+        <text class="d-label" x="0" y="12">TRY-AND-BUY, AT THE DOOR</text>
+
+        <text class="d-title" x="0"   y="42">AGENT ARRIVES</text>
+        <text class="d-note"  x="0"   y="60">Prepaid order in hand.</text>
+        <text class="d-note"  x="0"   y="76">Employed, zone-assigned.</text>
+
+        <text class="d-title" x="264" y="42">THE AGENT WAITS</text>
+        <text class="d-note"  x="264" y="60">The shopper tries the order</text>
+        <text class="d-note"  x="264" y="76">on, at the door.</text>
+
+        <text class="d-title" x="528" y="42">ITEM BY ITEM</text>
+        <text class="d-note"  x="528" y="60">Each piece is its own</text>
+        <text class="d-note"  x="528" y="76">decision.</text>
+
+        <rect class="s-hair f-wash" x="0"   y="100" width="8" height="8" />
+        <rect class="s-hair f-wash" x="264" y="100" width="8" height="8" />
+        <rect class="s-hair f-wash" x="528" y="100" width="8" height="8" />
+
+        <path class="s-ink" d="M8,104 H256"   marker-end="url(#arw-s06)" />
+        <path class="s-ink" d="M272,104 H520" marker-end="url(#arw-s06)" />
+        <path class="s-ink" d="M536,104 H806" marker-end="url(#arw-s06)" />
+
+        <!-- the decision · the deck's one accent -->
+        <rect class="f-green s-accent" x="812" y="90" width="28" height="28" />
+        <text class="d-title" x="812" y="42">KEEP OR HAND BACK</text>
+        <text class="d-note"  x="812" y="60">Made at the door, in person.</text>
+
+        <!-- outcome one · kept -->
+        <path class="s-ink" d="M844,104 H884" marker-end="url(#arw-s06)" />
+        <text class="d-title" x="892" y="108">KEPT</text>
+        <text class="d-note"  x="892" y="128">The sale closes there.</text>
+        <text class="d-note"  x="892" y="144">Prepaid at checkout.</text>
+
+        <!-- outcome two · handed back, travelling back across the page -->
+        <path class="s-ink" d="M826,118 V162 H208" marker-end="url(#arw-s06)" />
+        <path class="s-ink" d="M208,162 H10 V278 H36" marker-end="url(#arw-s06)" />
+        <text class="d-title" x="300" y="154">HANDED BACK</text>
+        <text class="d-note"  x="416" y="154">Straight back to the agent. No cash changes hands.</text>
+
+        <!-- ---------- BAND 2 · after the door ---------- -->
+        <text class="d-label" x="44" y="194">AFTER THE DOOR</text>
+
+        <text class="d-title" x="44"  y="212">BACK TO THE STORE</text>
+        <text class="d-note"  x="44"  y="230">There is no warehouse. It goes</text>
+        <text class="d-note"  x="44"  y="246">back to the shelf it came from.</text>
+
+        <text class="d-title" x="310" y="212">RECORDED AS AN EVENT</text>
+        <text class="d-note"  x="310" y="230">The return and the stock move</text>
+        <text class="d-note"  x="310" y="246">are permanent records.</text>
+
+        <text class="d-title" x="576" y="212">THE REFUND</text>
+        <text class="d-note"  x="576" y="230">Back to the way it was paid.</text>
+        <text class="d-note"  x="576" y="246">Cash settles by credit note.</text>
+
+        <text class="d-title" x="842" y="212">ON THE STATEMENT</text>
+        <text class="d-note"  x="842" y="230">The return is a line on the</text>
+        <text class="d-note"  x="842" y="246">store's fortnightly payout.</text>
+
+        <rect class="s-hair f-wash" x="44"  y="274" width="8" height="8" />
+        <rect class="s-hair f-wash" x="310" y="274" width="8" height="8" />
+        <rect class="s-hair f-wash" x="576" y="274" width="8" height="8" />
+        <rect class="s-hair f-wash" x="842" y="274" width="8" height="8" />
+
+        <path class="s-ink" d="M52,278 H302"  marker-end="url(#arw-s06)" />
+        <path class="s-ink" d="M318,278 H568" marker-end="url(#arw-s06)" />
+        <path class="s-ink" d="M584,278 H834" marker-end="url(#arw-s06)" />
+      </svg>
+
+      <div class="stack-16">
+        <div class="cols-3">
+          <div class="stack-6" data-anim style="--i:4">
+            <span class="term">A waited trial is not a per-drop job</span>
+            <span class="body">The agent stands at the door for the whole trial. Per-drop pay pushes against waiting; a salary does not.</span>
+          </div>
+          <div class="stack-6" data-anim style="--i:5">
+            <span class="term">Returned stock needs a custodian</span>
+            <span class="body">What comes back is still the store's goods. There is no warehouse to absorb it — the same agent carries it back.</span>
+          </div>
+          <div class="stack-6" data-anim style="--i:6">
+            <span class="term">The door moment is the product</span>
+            <span class="body">Not a delivery step. Salaried agents, assigned by zone, can be trained on it and held to it.</span>
+          </div>
+        </div>
+
+        <span class="micro" data-anim style="--i:7">All three apps are built and wired to live dispatch. Nothing has launched yet.</span>
+      </div>
+
+    </div>
+  </section>
+
+<section class="slide" data-title="Why we win">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">07</span> &nbsp;Why we win</div>
+  </div>
+
+  <div class="slide-body stack-24">
+
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">The shelves already exist</h1>
+      <p class="statement" data-anim style="--i:2">The dark-store model builds the shelf, then buys the stock.<br />India&rsquo;s fashion shops already are one &mdash; stocked, staffed, paid for.</p>
+    </div>
+
+    <!-- Two paths at one scale: same box size, same step rhythm, same rhythm of
+         arrows. The left runs five deep and is filled; the right stops after
+         three and is drawn in outline. The difference in length is the argument. -->
+    <svg class="diagram" viewBox="0 0 1160 250" width="100%" preserveAspectRatio="xMidYMid meet"
+         role="img" data-anim style="--i:3"
+         aria-label="Two supply models drawn side by side at the same scale. The dark-store model runs five steps deep: lease the dark store, fit it out and staff it, buy the inventory, hold it while it ages, then deliver to the customer. India's quick-commerce network grew from about 2,200 such centres in 2023 to more than 7,000 in 2025, and Bain says dark-store unit economics remain unproven beyond top Metros and Tier 1 cities. The Trendzo model stops after three steps: stock is already on the partner's shelf, bought and paid for by the retailer; Trendzo digitises it; the order routes to the nearest in-stock open store and is picked and delivered in 60 minutes. None of the three steps buys stock.">
+      <defs>
+        <marker id="arw-s08w" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0 0 L8 4 L0 8 Z" class="f-ink" />
+        </marker>
+      </defs>
+
+      <line class="s-hair" x1="580" y1="2" x2="580" y2="248" />
+
+      <!-- LEFT · the dark-store path. Filled, five deep. -->
+      <text class="d-label" x="0" y="10">The dark-store model</text>
+      <text class="d-note" x="552" y="10" text-anchor="end">From ~2,200 centres in 2023 to 7,000+ in 2025</text>
+      <line class="s-hair" x1="0" y1="18" x2="552" y2="18" />
+
+      <rect class="s-hair f-wash" x="0" y="32" width="300" height="26" />
+      <text class="d-label d-faint" x="10" y="50">01</text>
+      <text class="d-title" x="38" y="50">Lease the dark store</text>
+      <text class="d-note" x="316" y="49">Rent starts before order one</text>
+      <line class="s-ink" x1="150" y1="58" x2="150" y2="70" marker-end="url(#arw-s08w)" />
+
+      <rect class="s-hair f-wash" x="0" y="70" width="300" height="26" />
+      <text class="d-label d-faint" x="10" y="88">02</text>
+      <text class="d-title" x="38" y="88">Fit it out and staff it</text>
+      <text class="d-note" x="316" y="87">Racking, packing, people</text>
+      <line class="s-ink" x1="150" y1="96" x2="150" y2="108" marker-end="url(#arw-s08w)" />
+
+      <rect class="s-hair f-wash" x="0" y="108" width="300" height="26" />
+      <text class="d-label d-faint" x="10" y="126">03</text>
+      <text class="d-title" x="38" y="126">Buy the inventory</text>
+      <text class="d-note" x="316" y="125">Cash becomes stock you own</text>
+      <line class="s-ink" x1="150" y1="134" x2="150" y2="146" marker-end="url(#arw-s08w)" />
+
+      <rect class="s-hair f-wash" x="0" y="146" width="300" height="26" />
+      <text class="d-label d-faint" x="10" y="164">04</text>
+      <text class="d-title" x="38" y="164">Hold it while it ages</text>
+      <text class="d-note" x="316" y="163">Unsold stock is written down</text>
+      <line class="s-ink" x1="150" y1="172" x2="150" y2="184" marker-end="url(#arw-s08w)" />
+
+      <rect class="s-hair f-wash" x="0" y="184" width="300" height="26" />
+      <text class="d-label d-faint" x="10" y="202">05</text>
+      <text class="d-title" x="38" y="202">Deliver to the customer</text>
+      <text class="d-note" x="316" y="201">The first rupee arrives here</text>
+
+      <text class="d-note"  x="0" y="230">Bain: dark-store unit economics &ldquo;remain unproven beyond top Metros and Tier 1 cities.&rdquo;</text>
+      <text class="d-label" x="0" y="246">Every new city repeats all five steps</text>
+
+      <!-- RIGHT · Trendzo. Outline only, and it stops after three. -->
+      <text class="d-label" x="608" y="10">The Trendzo model</text>
+      <text class="d-note" x="1160" y="10" text-anchor="end">Supply that already exists</text>
+      <line class="s-hair" x1="608" y1="18" x2="1160" y2="18" />
+
+      <rect class="s-dash" x="608" y="32" width="300" height="26" />
+      <text class="d-label d-faint" x="618" y="50">01</text>
+      <text class="d-title" x="646" y="50">Stock already on the shelf</text>
+      <text class="d-note" x="924" y="49">Bought and paid for by the retailer</text>
+      <line class="s-ink" x1="758" y1="58" x2="758" y2="70" marker-end="url(#arw-s08w)" />
+
+      <rect class="s-hair" x="608" y="70" width="300" height="26" />
+      <text class="d-label d-faint" x="618" y="88">02</text>
+      <text class="d-title" x="646" y="88">Trendzo digitises it</text>
+      <text class="d-note" x="924" y="87">One phone photo in, listing out</text>
+      <line class="s-ink" x1="758" y1="96" x2="758" y2="108" marker-end="url(#arw-s08w)" />
+
+      <rect class="s-accent f-green" x="608" y="108" width="300" height="26" />
+      <text class="d-label d-faint" x="618" y="126">03</text>
+      <text class="d-title d-accent" x="646" y="126">Nearest in-stock open store</text>
+      <text class="d-note" x="924" y="125">Picked and delivered in 60 minutes</text>
+
+      <text class="d-title" x="608" y="166">Three steps. None of them buys stock.</text>
+      <text class="d-note"  x="608" y="190">The shelves are already stocked, already staffed, already paid</text>
+      <text class="d-note"  x="608" y="206">for by the retailer who chose the stock. Markdown risk stays</text>
+      <text class="d-note"  x="608" y="222">where it has always sat, minutes from the buyer.</text>
+      <text class="d-label" x="608" y="246">A new city opens by signing stores, not by leasing buildings</text>
+    </svg>
+
+    <div class="stack-16" data-anim style="--i:4">
+      <div class="rule"></div>
+      <div class="cols-3">
+        <div class="stat">
+          <div class="fig">7,000+</div>
+          <div class="lab micro">Dark stores in 2025, up from ~2,200 in 2023</div>
+        </div>
+        <div class="stat">
+          <div class="fig">~65%</div>
+          <div class="lab micro">Of new dark stores opened in the top 10 cities</div>
+        </div>
+        <div class="stat">
+          <div class="fig">59%</div>
+          <div class="lab micro">Of India&rsquo;s apparel market is unorganised &mdash; mostly single-store shops</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="micro" data-anim style="--i:5">Bain &amp; Company / Flipkart 2026 &middot; CareEdge Ratings, India apparel FY25</p>
+
+  </div>
+</section>
+
+<section class="slide" data-title="The comparison">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">07</span> &nbsp;Why we win</div>
+  </div>
+
+  <div class="slide-body stack-24">
+
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">Against everyone else</h1>
+      <p class="statement" data-anim style="--i:2">Most hold three of these. The last two are the ones a warehouse cannot buy.</p>
+    </div>
+
+    <!-- Player column 340, then five 164-wide criteria columns = 1160.
+         Every cell is Yes, No, a dash, or a named qualifier — no bare
+         "partial", which would mean different things in different rows. -->
+    <svg class="diagram" viewBox="0 0 1160 226" width="100%" preserveAspectRatio="xMidYMid meet"
+         role="img" data-anim style="--i:3"
+         aria-label="Six models scored on five criteria: sells fashion, delivers inside an hour, lets you try before you pay, sells stock that already sits in local shops, and operates beyond the metros. Myntra and Ajio marketplace: fashion yes, one-hour no, try-before-pay no, local stock no, beyond metros yes. Blinkit, Zepto and Instamart: fashion no, one-hour yes, try-before-pay no, local stock no, beyond metros yes. Amazon and Flipkart Fashion: fashion yes, one-hour no, try-before-pay is a home trial over several days rather than at the door, local stock no, beyond metros yes. The metro fast-fashion players M-Now, Slikk, Blip and ZILO: fashion yes, one-hour yes, try-before-pay only at Slikk, local stock no, beyond metros no. Trendzo: yes on all five.">
+
+      <text class="d-label" x="0" y="10">ADJACENT MODELS, AND WHAT EACH ONE ACTUALLY DOES</text>
+
+      <text class="d-label" x="340"  y="34">FASHION</text>
+      <text class="d-label" x="504"  y="34">ONE HOUR</text>
+      <text class="d-label" x="668"  y="34">TRY BEFORE PAY</text>
+      <text class="d-label" x="832"  y="34">LOCAL STOCK</text>
+      <text class="d-label" x="996"  y="34">BEYOND METROS</text>
+      <line class="s-ink" x1="0" y1="44" x2="1160" y2="44" />
+
+      <text class="d-title" x="0"   y="70">Myntra, Ajio</text>
+      <text class="d-note"  x="182" y="70">marketplace</text>
+      <text class="d-title" x="340" y="70">Yes</text>
+      <text class="d-note"  x="504" y="70">No</text>
+      <text class="d-note"  x="668" y="70">No</text>
+      <text class="d-note"  x="832" y="70">No</text>
+      <text class="d-title" x="996" y="70">Yes</text>
+      <line class="s-hair" x1="0" y1="82" x2="1160" y2="82" />
+
+      <text class="d-title" x="0"   y="104">Blinkit, Zepto, Instamart</text>
+      <text class="d-note"  x="340" y="104">No</text>
+      <text class="d-title" x="504" y="104">Yes</text>
+      <text class="d-note"  x="668" y="104">No</text>
+      <text class="d-note"  x="832" y="104">No</text>
+      <text class="d-title" x="996" y="104">Yes</text>
+      <line class="s-hair" x1="0" y1="116" x2="1160" y2="116" />
+
+      <text class="d-title" x="0"   y="138">Amazon, Flipkart Fashion</text>
+      <text class="d-title" x="340" y="138">Yes</text>
+      <text class="d-note"  x="504" y="138">No</text>
+      <text class="d-note"  x="668" y="138">At home, over days</text>
+      <text class="d-note"  x="832" y="138">No</text>
+      <text class="d-title" x="996" y="138">Yes</text>
+      <line class="s-hair" x1="0" y1="150" x2="1160" y2="150" />
+
+      <text class="d-title" x="0"   y="172">M-Now, Slikk, Blip, ZILO</text>
+      <text class="d-note"  x="206" y="172">metro fast fashion</text>
+      <text class="d-title" x="340" y="172">Yes</text>
+      <text class="d-title" x="504" y="172">Yes</text>
+      <text class="d-note"  x="668" y="172">Slikk only</text>
+      <text class="d-note"  x="832" y="172">No</text>
+      <text class="d-note"  x="996" y="172">No</text>
+      <line class="s-hair" x1="0" y1="184" x2="1160" y2="184" />
+
+      <rect class="f-green" x="0" y="184" width="1160" height="38" />
+      <text class="d-title d-accent" x="0"   y="208">Trendzo</text>
+      <text class="d-title d-accent" x="340" y="208">Yes</text>
+      <text class="d-title d-accent" x="504" y="208">Yes</text>
+      <text class="d-title d-accent" x="668" y="208">Yes, at the door</text>
+      <text class="d-title d-accent" x="832" y="208">Yes</text>
+      <text class="d-title d-accent" x="996" y="208">Yes</text>
+    </svg>
+
+    <div class="stack-10" data-anim style="--i:4">
+      <div class="rule"></div>
+      <p class="body ink">The row above ours is the closest: metro fast-fashion players already delivering inside an hour, and Slikk already letting the rider wait while you try. But all of them sell stock they bought and hold in their own dark stores, and that is what ties them to metro density. We sell what the shop already owns, so a new city is signed, not built.</p>
+      <p class="micro">Positioning per each company&rsquo;s published service terms, August 2026 &middot; &ldquo;Beyond metros&rdquo; means live service in Tier 2 cities, not stated expansion plans</p>
+    </div>
+
+  </div>
+</section>
+
+<section class="slide" data-title="Why now">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">08</span> &nbsp;Why now</div>
+  </div>
+
+  <div class="slide-body stack-24">
+
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">Why now</h1>
+      <p class="statement" data-anim style="--i:2">The category is early. The expensive lesson has already been paid for by somebody else.</p>
+    </div>
+
+    <svg class="diagram" viewBox="0 0 1160 340" width="100%" preserveAspectRatio="xMidYMid meet"
+         role="img" data-anim style="--i:3"
+         aria-label="Two curves. On the left, a product life cycle: grocery quick commerce sits at maturity, its growth decelerating, while fashion quick commerce is still at introduction — where Trendzo enters. On the right, a hype cycle: metro dark-store fashion sits at the peak of inflated expectations with its unit economics unproven outside the top cities, while Trendzo enters on the slope of enlightenment, using inventory that already exists instead of building dark stores.">
+
+      <!-- ===== LEFT · PRODUCT LIFE CYCLE ===== -->
+      <text class="d-label" x="0" y="12">PRODUCT LIFE CYCLE &middot; WHERE THE CATEGORY IS</text>
+
+      <line class="s-hair" x1="30" y1="52" x2="30" y2="232" />
+      <line class="s-hair" x1="30" y1="232" x2="530" y2="232" />
+
+      <path class="s-ink" fill="none" d="M30 226 C 180 225, 185 66, 330 62 C 425 59, 460 54, 520 52" />
+
+      <!-- grocery: maturing, growth decelerating -->
+      <circle class="f-ink" cx="452" cy="55" r="5" />
+      <path class="s-dash" d="M452 50 V32" />
+      <text class="d-title" x="452" y="26" text-anchor="middle">Grocery, maturing</text>
+
+      <!-- fashion: the category Trendzo enters -->
+      <circle class="d-accent" cx="112" cy="215" r="6" />
+      <path class="s-dash" d="M112 221 V262" />
+      <text class="d-title d-accent" x="112" y="278" text-anchor="middle">Fashion</text>
+      <text class="d-note" x="112" y="296" text-anchor="middle">where we enter</text>
+
+      <text class="d-note" x="60"  y="250">Introduction</text>
+      <text class="d-note" x="250" y="250">Growth</text>
+      <text class="d-note" x="430" y="250">Maturity</text>
+
+      <text class="d-note" x="0" y="330">Quick commerce: ~70% of online grocery, ~1% of fashion.</text>
+
+      <!-- ===== RIGHT · HYPE CYCLE ===== -->
+      <text class="d-label" x="630" y="12">HYPE CYCLE &middot; WHERE THE MODEL IS</text>
+
+      <line class="s-hair" x1="646" y1="52" x2="646" y2="232" />
+      <line class="s-hair" x1="646" y1="232" x2="1160" y2="232" />
+
+      <path class="s-ink" fill="none" d="M646 228 C 692 228, 706 66, 746 62 C 786 58, 796 156, 842 186 C 876 208, 896 206, 932 201 C 1002 193, 1046 144, 1112 132 C 1136 128, 1146 127, 1156 126" />
+
+      <!-- metro dark stores: at the peak, economics unproven outside the top cities -->
+      <circle class="f-ink" cx="748" cy="61" r="5" />
+      <path class="s-dash" d="M748 56 V32" />
+      <text class="d-title" x="748" y="26" text-anchor="middle">Metro dark stores</text>
+
+      <!-- Trendzo: enters after the trough, on someone else's lesson -->
+      <circle class="d-accent" cx="1046" cy="143" r="6" />
+      <path class="s-dash" d="M1046 149 V262" />
+      <text class="d-title d-accent" x="1046" y="278" text-anchor="middle">Trendzo</text>
+      <text class="d-note" x="1046" y="296" text-anchor="middle">no dark stores to write off</text>
+
+      <text class="d-note" x="700" y="250">Peak</text>
+      <text class="d-note" x="880" y="250">Trough</text>
+      <text class="d-note" x="1010" y="250">Slope</text>
+
+      <text class="d-note" x="646" y="330">Bain: dark-store economics unproven beyond Metros and Tier 1.</text>
+    </svg>
+
+    <p class="body ink" data-anim style="--i:4">Grocery proved people will pay for speed, then ran out of room. Fashion has the demand and none of the coverage &mdash; and the capital-heavy way of serving it has already been tried, in cities we are not starting in.</p>
+
+    <p class="micro" data-anim style="--i:5">Bain &amp; Company / Flipkart 2026 &middot; Eternal and Swiggy disclosures &middot; curves are illustrative frameworks, not plotted data</p>
+
+  </div>
+</section>
+
+<section class="slide" data-title="Market">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">09</span> &nbsp;Market</div>
+  </div>
+
+  <div class="slide-body stack-24">
+
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">Sizing the market</h1>
+      <p class="statement" data-anim style="--i:2">Not all of Indian apparel. The Tier 2 and 3 part, still bought offline.</p>
+    </div>
+
+    <!-- One scale throughout: 940px = Rs 9.3 lakh crore, so 101.08px per lakh
+         crore. Tier 2/3 at 23% is drawn 216px (216/940 = 22.98%), reading back
+         as Rs 2.14 lakh crore. The unorganised 59% of that is drawn 127px
+         (127/216 = 58.80%). Solid outline = a published figure; dashed = a
+         number derived on this slide. -->
+    <svg class="diagram" viewBox="0 0 1160 240" width="100%" preserveAspectRatio="xMidYMid meet"
+         role="img" data-anim style="--i:3"
+         aria-label="A three-step funnel narrowing India's apparel market. Step one, drawn with a solid outline because it is published: all India apparel, about 9.3 lakh crore rupees in FY25, projected to about 16 lakh crore by FY30, per CareEdge Ratings. Step two, drawn dashed because it is derived on this slide: Tier 2 and 3 cities are about 23 percent of apparel demand, which applied to the market above implies about 2.1 lakh crore rupees. CareEdge publishes the 23 percent, not that rupee figure. Step three, the wedge: the independent shops that make up the 59 percent of the market still unorganised, single-store and family-run, already holding the stock. That 59 percent is CareEdge's national share applied here, not a Tier 2 measurement. Trendzo is pre-launch, targeting about 100 stores in Indore across 3 zones, of which 10 are signed and 35 in talks.">
+      <text class="d-label" x="0"    y="9">INDIA&rsquo;S APPAREL MARKET, NARROWED DOWN</text>
+      <text class="d-label" x="1150" y="9" text-anchor="end">SOLID OUTLINE = PUBLISHED &middot; DASHED = DERIVED ON THIS SLIDE</text>
+
+      <!-- 01 · all India apparel · published -->
+      <text class="d-title" x="190" y="42" text-anchor="end">All India apparel</text>
+      <text class="d-note"  x="190" y="60" text-anchor="end">CareEdge Ratings, FY25</text>
+      <rect class="s-hair f-wash" x="210" y="22" width="940" height="50" />
+      <text class="d-big"  x="228"  y="54">Rs 9.3 lakh crore</text>
+      <text class="d-note" x="1132" y="54" text-anchor="end">Projected ~Rs 16 lakh crore by FY30</text>
+
+      <path class="s-hair" d="M210 72 V98" />
+      <path class="s-hair" d="M1150 72 L426 98" />
+
+      <!-- 02 · Tier 2 and 3 · derived here, so drawn dashed -->
+      <text class="d-title" x="190" y="118" text-anchor="end">Tier 2 and 3</text>
+      <text class="d-note"  x="190" y="136" text-anchor="end">~23% of apparel demand</text>
+      <rect class="s-dash f-wash" x="210" y="98" width="216" height="50" />
+      <text class="d-label" x="442" y="116">IMPLIED &middot; 23% OF DEMAND APPLIED TO THE 9.3 LAKH CRORE ABOVE</text>
+      <text class="d-big"   x="442" y="142">~Rs 2.1 lakh crore</text>
+      <text class="d-note"  x="692" y="142">CareEdge publishes the 23%, not this rupee figure.</text>
+
+      <path class="s-hair" d="M210 148 V174" />
+      <path class="s-hair" d="M426 148 L337 174" />
+
+      <!-- 03 · the wedge -->
+      <text class="d-title d-accent" x="190" y="194" text-anchor="end">Our wedge</text>
+      <text class="d-note" x="190" y="212" text-anchor="end">where Trendzo starts</text>
+      <rect class="f-green s-accent" x="210" y="174" width="127" height="50" />
+      <text class="d-title" x="353" y="192">Independent shops &mdash; the 59% still unorganised</text>
+      <text class="d-note"  x="353" y="210">Single-store, family-run, already holding the stock. Pilot, pre-launch: Indore &mdash; ~100 stores targeted, 3 zones.</text>
+      <text class="d-note"  x="353" y="228">The 59% is CareEdge&rsquo;s national share, applied here &mdash; not a Tier 2 measurement.</text>
+    </svg>
+
+    <div class="stack-16" data-anim style="--i:4">
+      <div class="rule"></div>
+      <div class="cols-3">
+        <div class="stat">
+          <div class="fig">59%</div>
+          <div class="lab micro">Of India&rsquo;s apparel market is unorganised &mdash; single-store shops</div>
+        </div>
+        <div class="stat">
+          <div class="fig">~15 pts</div>
+          <div class="lab micro">Of share independents lost as organised went ~25% to ~40%</div>
+        </div>
+        <div class="stat">
+          <div class="fig">~19%</div>
+          <div class="lab micro">Of fashion is bought online at all &mdash; ~81% is still in a shop</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack-10" data-anim style="--i:5">
+      <div class="cols-2">
+        <div class="micro">Indore pipeline &nbsp;<span class="micro ink">10 signed &middot; 35 in talks &middot; ~100 targeted</span></div>
+        <div class="micro">Year-5 plan &nbsp;<span class="micro ink">Rs 99 crore GMV &mdash; under 0.05% of the Tier 2/3 slice</span></div>
+      </div>
+      <p class="micro">Market, Tier 2/3 and 59% unorganised: CareEdge Ratings &middot; 25% to 40% organised: Statista &middot; ~19% online: Redseer via Meesho RHP</p>
+    </div>
+
+  </div>
+</section>
+
+<section class="slide" data-title="Business model">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">10</span> &nbsp;Business model</div>
+  </div>
+
+  <div class="slide-body stack-16">
+
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">How we make money</h1>
+      <p class="statement" data-anim style="--i:2">Commission led. The shop earns as if the discount never happened.</p>
+    </div>
+
+    <!-- One order, three destinations. The commission is taken on the pre-discount
+         base; TCS is drawn crossing the dashed line and out of the platform so it
+         can never read as revenue; the discount enters as a Trendzo-funded input.
+         Node widths are schematic, not proportional — the top label says so. -->
+    <svg class="diagram" viewBox="0 0 1160 216" width="100%" preserveAspectRatio="xMidYMid meet"
+         role="img" data-anim style="--i:3"
+         aria-label="Schematic of the money path for one order, not drawn to scale. What the shopper pays after discount, plus the discount Trendzo funds itself, add up to the pre-discount order value. From that base three things happen: a 20 percent commission goes up to Trendzo as its revenue; TCS is collected and sent downward across a dashed line, out of the platform entirely, to the government, where it is remitted in full and never counted as revenue; and the remainder, once refunds and holds are netted, is the net paid to the retailer, fortnightly with no minimum, on the 14th and the last day of each month, on an itemised statement.">
+      <defs>
+        <marker id="arw-s10bm" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 Z" class="f-ink" />
+        </marker>
+      </defs>
+
+      <text class="d-label" x="0" y="10">ONE ORDER &middot; WHERE THE MONEY GOES &middot; SCHEMATIC, NOT TO SCALE</text>
+
+      <text class="d-title" x="1156" y="34" text-anchor="end">Three destinations.</text>
+      <text class="d-note"  x="1156" y="54" text-anchor="end">Commission to us. TCS to the government. The rest to the shop.</text>
+
+      <!-- the commission: the slide's one accent -->
+      <rect class="f-green s-accent" x="470" y="12" width="290" height="52" />
+      <text class="d-big d-accent" x="484" y="40">20%</text>
+      <text class="d-title" x="540" y="40">COMMISSION</text>
+      <text class="d-note"  x="484" y="56">On the pre-discount value. Trendzo&rsquo;s revenue.</text>
+
+      <!-- inputs: what the shopper pays, plus the discount we fund -->
+      <rect class="s-hair" x="0" y="72" width="250" height="22" />
+      <text class="d-label" x="12" y="87">SHOPPER PAYS &middot; DISCOUNTED</text>
+      <text class="d-title" x="125" y="109" text-anchor="middle">+</text>
+      <rect class="s-hair" x="0" y="114" width="250" height="22" />
+      <text class="d-label" x="12" y="129">TRENDZO FUNDS THE DISCOUNT</text>
+
+      <path d="M250 83 H274 V104" class="s-ink" />
+      <path d="M250 125 H274 V104" class="s-ink" />
+      <circle class="f-ink" cx="274" cy="104" r="2.5" />
+      <path d="M274 104 H290" class="s-ink" marker-end="url(#arw-s10bm)" />
+
+      <rect class="s-hair" x="294" y="75" width="190" height="58" />
+      <text class="d-title" x="308" y="94">ORDER VALUE</text>
+      <text class="d-note"  x="308" y="109">Pre-discount.</text>
+      <text class="d-note"  x="308" y="122">The commission base.</text>
+
+      <path d="M484 104 H618" class="s-ink" marker-end="url(#arw-s10bm)" />
+      <circle class="f-ink" cx="560" cy="104" r="2.5" />
+      <path d="M560 104 V69" class="s-ink" marker-end="url(#arw-s10bm)" />
+      <path d="M560 104 V165" class="s-ink" marker-end="url(#arw-s10bm)" />
+
+      <rect class="s-hair" x="622" y="75" width="218" height="58" />
+      <text class="d-title" x="636" y="94">&minus; REFUNDS &amp; HOLDS</text>
+      <text class="d-note"  x="636" y="109">Netted in the same</text>
+      <text class="d-note"  x="636" y="122">payout cycle.</text>
+
+      <path d="M840 104 H870" class="s-ink" marker-end="url(#arw-s10bm)" />
+
+      <rect class="s-hair" x="874" y="75" width="282" height="58" />
+      <text class="d-title" x="888" y="94">NET TO THE RETAILER</text>
+      <text class="d-note"  x="888" y="109">Fortnightly, no minimum &mdash; the 14th</text>
+      <text class="d-note"  x="888" y="122">and the last day of the month.</text>
+
+      <text class="d-note"  x="0" y="150">Trendzo funds the discount &mdash; the shop&rsquo;s base never moves.</text>
+      <text class="d-label" x="572" y="150">TCS &middot; COLLECTED</text>
+      <text class="d-note"  x="1156" y="150" text-anchor="end">Itemised: gross, commission, TCS, refunds, holds, adjustments, net.</text>
+
+      <!-- TCS leaves the platform entirely -->
+      <path d="M0 159 H1156" class="s-dash" />
+      <text class="d-label" x="0" y="175">OUTSIDE THE PLATFORM</text>
+
+      <rect class="s-hair f-wash" x="380" y="169" width="430" height="42" />
+      <text class="d-title" x="394" y="187">GOVERNMENT</text>
+      <text class="d-note"  x="394" y="203">TCS collected and remitted in full. Never counted as revenue.</text>
+    </svg>
+
+    <div class="stack-16" data-anim style="--i:4">
+      <div class="rule"></div>
+      <div class="cols-3">
+        <div class="stat">
+          <div class="fig">20%</div>
+          <div class="lab micro">Commission on pre-discount value, blending to 18% &mdash; 86% of Year-5 revenue</div>
+        </div>
+        <div class="stat">
+          <div class="fig small">Rs 29 &amp; Rs 49</div>
+          <div class="lab micro">Express and Try-and-Buy delivery fees &mdash; 8% of Year-5 revenue</div>
+        </div>
+        <div class="stat">
+          <div class="fig small">0.5&ndash;1.5%</div>
+          <div class="lab micro">Promoted listings on GMV, from Year 3 &mdash; 6% of Year-5 revenue</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack-10" data-anim style="--i:5">
+      <p class="micro ink">Three streams, one order &middot; a Rs 700 express order on Year-1 costs</p>
+      <p class="body ink">Rs 700 value &middot; +Rs 140 commission &middot; +Rs 29 delivery &middot; &minus;Rs 84 discount we fund &middot; &minus;Rs 12 processing &middot; &minus;Rs 57 fleet &nbsp;=&nbsp; <span class="green">+Rs 16 contribution</span></p>
+      <p class="body">Blended Year 1 is about &minus;Rs 2 an order, positive in Year 2, +Rs 95 by Year 5. CAC Rs 184, LTV Rs 685, 3.7&times; at maturity.</p>
+      <p class="body"><span class="micro ink">Not yet priced</span> &nbsp; A metered AI-catalog tier, and pricing on virtual try-on. Both built and running; neither charged for yet.</p>
+      <p class="micro">Standard and pickup are free &middot; effective delivery revenue Rs 12 rising to Rs 16 an order &middot; Reliance called AJIO Rush economics &ldquo;better&rdquo;, Q1 FY26 &middot; pre-launch</p>
+    </div>
+
+  </div>
+</section>
+
+<section class="slide" data-title="What's built">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">11</span> &nbsp;What's built</div>
+  </div>
+
+  <div class="slide-body stack-24">
+
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">The state of the build</h1>
+      <p class="statement" data-anim style="--i:2">Pre-launch, not pre-product. Three apps, an admin dashboard, and the money engine underneath them.</p>
+    </div>
+
+    <div class="cols-3" data-anim style="--i:3">
+      <div class="stack-10">
+        <div class="micro green">Shopper app &middot; live</div>
+        <div class="stack-6">
+          <span class="body ink">Reels-first discovery &mdash; add to cart from inside the video</span>
+          <span class="body ink">AI Virtual Try-On on the shopper&rsquo;s own photo</span>
+          <span class="body ink">Try-and-Buy at the door, prepaid, no cash</span>
+          <span class="body ink">One cart across several nearby stores</span>
+          <span class="body ink">Wallet, loyalty, GST invoices, phone OTP</span>
+          <span class="body ink">Payment gateway integrated</span>
+        </div>
+      </div>
+
+      <div class="stack-10">
+        <div class="micro green">Retailer app &middot; live</div>
+        <div class="stack-6">
+          <span class="body ink">AI mockups &mdash; phone photo to studio listing</span>
+          <span class="body ink">Bulk queue for a full rack in one pass</span>
+          <span class="body ink">Catalog, variants and live inventory</span>
+          <span class="body ink">One toggle takes the store online</span>
+          <span class="body ink">Earnings, payouts and the web portal</span>
+          <span class="body ink">Counter POS, free to the retailer</span>
+        </div>
+      </div>
+
+      <div class="stack-10">
+        <div class="micro green">Agent app &middot; live</div>
+        <div class="stack-6">
+          <span class="body ink">Live dispatch, auto-assigned by zone</span>
+          <span class="body ink">Door-side keep or return, item by item</span>
+          <span class="body ink">Policy badges block invalid returns</span>
+          <span class="body ink">Photo evidence on every decision</span>
+          <span class="body ink">Two-party handover back to the store</span>
+          <span class="body ink">Shift, earnings and cash reconciliation</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack-10" data-anim style="--i:4">
+      <div class="rule"></div>
+      <div class="micro ink">And the part nobody demos</div>
+      <div class="cols-4">
+        <div class="stack-6">
+          <div class="term">Pricing and tax engine</div>
+          <div class="body">GST, TCS, credit notes. Invoices are never edited.</div>
+        </div>
+        <div class="stack-6">
+          <div class="term">Payout engine</div>
+          <div class="body">Itemised gross, commission, TCS, refunds, holds, net.</div>
+        </div>
+        <div class="stack-6">
+          <div class="term">KYC before money moves</div>
+          <div class="body">GSTIN check, PAN validation, bank penny-drop.</div>
+        </div>
+        <div class="stack-6">
+          <div class="term">87 admin screens</div>
+          <div class="body">Disputes, payout runs, GST returns, reconciliation.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack-10" data-anim style="--i:5">
+      <div class="rule"></div>
+      <div class="micro ink">Shipping next</div>
+      <div class="chips">
+        <span class="chip">Camera scan, no barcode gun</span>
+        <span class="chip">Integrated POS</span>
+        <span class="chip">Metered AI catalog tier</span>
+        <span class="chip">Promoted listings</span>
+        <span class="chip">Community reels</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="slide" data-title="Team">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">12</span> &nbsp;Team</div>
+  </div>
+
+  <div class="slide-body stack-24">
+
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">Builder and operator</h1>
+      <p class="statement" data-anim style="--i:2">One has already digitised a street market. The other has run the supply chain this sells.</p>
+    </div>
+
+    <div class="split">
+
+      <div class="stack-16" data-anim style="--i:3">
+        <div class="stack-6">
+          <span class="term lg">Akshat Jain</span>
+          <span class="micro green">Founder &amp; CEO &middot; product, engineering, platform</span>
+        </div>
+
+        <div class="stack-10">
+          <div class="stack-6">
+            <span class="term">Synquic Labs</span>
+            <span class="body">Software firm, three years. 68 projects shipped &mdash; 10+ apps, 5+ SaaS products, inventory systems, AI infrastructure, and Oppo&rsquo;s in-house retailer management platform.</span>
+          </div>
+          <div class="stack-6">
+            <span class="term">Ferrywala</span>
+            <span class="body">Digitising street markets and unskilled vendors &mdash; the same problem Trendzo solves, one rung further down.</span>
+          </div>
+          <div class="stack-6">
+            <span class="term">Slide</span>
+            <span class="body">Meta and Google bucket automation, voice and email automation.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack-16" data-anim style="--i:4">
+        <div class="stack-6">
+          <span class="term lg">Hardik Jain</span>
+          <span class="micro green">Founder &amp; COO &middot; supply, store onboarding, operations</span>
+        </div>
+
+        <div class="stack-10">
+          <div class="stack-6">
+            <span class="term">Yarn manufacturing mill</span>
+            <span class="body">Runs a mill in the textile industry &mdash; the supply chain that fills every shelf Trendzo lists, known from the raw-material end up.</span>
+          </div>
+          <div class="stack-6">
+            <span class="term">Corporate DSA</span>
+            <span class="body">Bank finance and legal. Onboarding a shop is a KYC, banking and contract problem before it is a sales one.</span>
+          </div>
+          <div class="stack-6">
+            <span class="term">The relationships</span>
+            <span class="body">Signing 100 Indore stores is done in person, by someone the trade already knows.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="stack-10" data-anim style="--i:5">
+      <div class="rule"></div>
+      <p class="body ink">Trendzo is a software platform wrapped around an apparel supply chain. One of us has built platforms like it and digitised informal retail before; the other has lived inside the supply chain and can open the doors. That split is the reason this is buildable by two people.</p>
+    </div>
+
+  </div>
+</section>
+
+<section class="slide" data-title="The ask">
+  <div class="slide-head">
+    <div class="kicker" data-anim style="--i:0"><span class="num">13</span> &nbsp;The ask</div>
+  </div>
+
+  <div class="slide-body stack-24">
+
+    <div class="stack-10">
+      <h1 class="head sm" data-anim style="--i:1">What this round buys</h1>
+      <p class="statement" data-anim style="--i:2">Rs 2 crore to a Year-1 proof in Indore. Two ways in &mdash; certainty of capital, or a tighter price for staging it.</p>
+    </div>
+
+    <div class="versus" data-anim style="--i:3">
+      <div class="stack-10">
+        <span class="micro ink">Option A &middot; single tranche</span>
+        <div class="stats" style="gap:48px">
+          <div class="stat"><div class="fig small">Rs 2 Cr</div><div class="lab micro">Up front, at close</div></div>
+          <div class="stat"><div class="fig small">18%</div><div class="lab micro">Founder dilution</div></div>
+        </div>
+        <span class="body">~Rs 9 crore pre-money, Rs 11 crore post. The investor prices the certainty of full capital committed on day one.</span>
+      </div>
+
+      <div class="stack-10">
+        <span class="micro green">Option B &middot; phased</span>
+        <div class="stats" style="gap:48px">
+          <div class="stat"><div class="fig small green">50L + 1.5 Cr</div><div class="lab micro">Now, then on Year-1 proof</div></div>
+          <div class="stat"><div class="fig small">15%</div><div class="lab micro">Founder dilution</div></div>
+        </div>
+        <span class="body">~Rs 11.3 crore pre-money, Rs 13.3 crore post. The second tranche releases only on the Year-1 proof, so the round prices three points tighter.</span>
+      </div>
+    </div>
+
+    <!-- Use of funds as one proportional bar: 35 / 28 / 22 / 15 of 1160px
+         = 406 / 325 / 255 / 174. Same allocation under either structure. -->
+    <svg class="diagram" viewBox="0 0 1160 74" width="100%" preserveAspectRatio="xMidYMid meet"
+         role="img" data-anim style="--i:4"
+         aria-label="Use of funds across the full 2 crore rupees, identical under either structure: engineering and product 35 percent, operations and fleet 28 percent, marketing and growth 22 percent, and general and administrative plus runway buffer 15 percent.">
+      <text class="d-label" x="0" y="10">USE OF FUNDS &middot; THE FULL Rs 2 CRORE, EITHER STRUCTURE</text>
+
+      <rect class="f-green s-accent" x="0"   y="20" width="406" height="28" />
+      <rect class="s-hair f-wash"    x="406" y="20" width="325" height="28" />
+      <rect class="s-hair f-wash"    x="731" y="20" width="255" height="28" />
+      <rect class="s-hair f-wash"    x="986" y="20" width="174" height="28" />
+
+      <text class="d-title d-accent" x="0"   y="66">35%</text>
+      <text class="d-note"           x="42"  y="66">Engineering and product</text>
+      <text class="d-title"          x="406" y="66">28%</text>
+      <text class="d-note"           x="448" y="66">Operations and fleet</text>
+      <text class="d-title"          x="731" y="66">22%</text>
+      <text class="d-note"           x="773" y="66">Marketing and growth</text>
+      <text class="d-title"          x="986" y="66">15%</text>
+      <text class="d-note"           x="1028" y="66">G&amp;A and buffer</text>
+
+    </svg>
+
+    <div class="stack-10" data-anim style="--i:5">
+      <div class="rule"></div>
+      <div class="cols-2">
+        <div class="stack-6">
+          <span class="micro ink">The Year-1 proof it buys</span>
+          <span class="body">~100 Indore stores onboarded onto live inventory sync, a three-agent fleet running, sub-60-minute delivery proven, and a ~150-orders-a-day exit run-rate with the first repeat-cohort data.</span>
+        </div>
+        <div class="stack-6">
+          <span class="micro ink">And what comes after</span>
+          <span class="body">A Rs 2&ndash;3 crore seed at around month 18 bridges the Rs 2.18 crore trough and funds four cities &mdash; en route to EBITDA breakeven in Year 4.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack-10" data-anim style="--i:6">
+      <div class="rule"></div>
+      <div class="slide-foot" style="justify-content:space-between; padding-top:2px">
+        <span class="term">Akshat Jain &middot; Hardik Jain</span>
+        <span class="micro">info@trendzonow.com &nbsp;&middot;&nbsp; +91 99264 46622 &nbsp;&middot;&nbsp; www.trendzonow.com</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="slide v4-thanks" data-title="Thank you">
+  <div class="v4-thanks-inner">
+    <p class="hello" data-anim style="--i:0">Thank you for watching</p>
+    <img class="v4-wordmark" src="assets/trendzo-logo-ink.png" alt="Trendzo" data-anim style="--i:1" />
+    <p class="who" data-anim style="--i:2">Trendzo<br />Fashion &middot; Delivered</p>
+    <p class="links" data-anim style="--i:3">
+      <a href="https://trendzonow.com">trendzonow.com</a> <i>|</i> <a href="https://instagram.com/trendzo.ind">@trendzo.ind</a> <i>|</i> <a href="mailto:info@trendzonow.com">info@trendzonow.com</a>
+    </p>
+    <p class="copy" data-anim style="--i:4">&copy;2026 Trendzo. All rights reserved.</p>
+  </div>
+</section>
+
+
+
+
+
+
+
+
+
+
+<!-- SLIDES-END -->
+
+  <!-- Chrome -->
+  <div class="nav-zone prev" id="zonePrev"></div>
+  <div class="nav-zone next" id="zoneNext"></div>
+  <div id="footbar">
+    <div id="progress"></div>
+    <div id="hint">Arrow keys to move · G for index · F for fullscreen</div>
+  </div>
+  <div id="counter"><b id="cur">01</b> / <span id="tot">18</span></div>
+
+  <div id="index">
+    <div class="kicker">Contents</div>
+    <div class="grid" id="indexGrid"></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+(function () {
+  var stage    = document.getElementById('stage');
+  var slides   = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var progress = document.getElementById('progress');
+  var curEl    = document.getElementById('cur');
+  var totEl    = document.getElementById('tot');
+  var hint     = document.getElementById('hint');
+  var indexEl  = document.getElementById('index');
+  var gridEl   = document.getElementById('indexGrid');
+
+  // Titles are read off each slide's own data-title, so the index can never
+  // drift out of sync with the slides the way a hand-kept array does.
+  var TITLES = slides.map(function (s, n) {
+    return s.getAttribute('data-title') || ('Slide ' + (n + 1));
+  });
+
+  var i = 0;
+
+  function fit() {
+    var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  slides.forEach(function (_, n) {
+    var b = document.createElement('i');
+    b.addEventListener('click', function (e) { e.stopPropagation(); go(n); });
+    progress.appendChild(b);
+  });
+  var blocks = Array.prototype.slice.call(progress.children);
+  totEl.textContent = String(slides.length).padStart(2, '0');
+
+  TITLES.forEach(function (t, n) {
+    var b = document.createElement('button');
+    b.innerHTML = '<span class="n">' + String(n + 1).padStart(2, '0') + '</span><span class="t"></span>';
+    b.querySelector('.t').textContent = t;
+    b.addEventListener('click', function () { go(n); closeIndex(); });
+    gridEl.appendChild(b);
+  });
+  var indexBtns = Array.prototype.slice.call(gridEl.children);
+
+  function go(n) {
+    if (n < 0 || n > slides.length - 1 || n === i) return;
+    slides[i].classList.remove('is-active');
+    i = n;
+    void slides[i].offsetWidth;
+    slides[i].classList.add('is-active');
+    history.replaceState(null, '', '#' + (i + 1));
+    paint();
+  }
+
+  function paint() {
+    blocks.forEach(function (b, n) { b.classList.toggle('on', n === i); });
+    indexBtns.forEach(function (b, n) { b.classList.toggle('cur', n === i); });
+    curEl.textContent = String(i + 1).padStart(2, '0');
+    if (i > 0) hint.classList.add('gone');
+  }
+
+  function openIndex()  { indexEl.classList.add('open'); }
+  function closeIndex() { indexEl.classList.remove('open'); }
+
+  document.addEventListener('keydown', function (e) {
+    var k = e.key;
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === ' ' || k === 'PageDown') { e.preventDefault(); go(i + 1); }
+    else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp') { e.preventDefault(); go(i - 1); }
+    else if (k === 'Home') { go(0); }
+    else if (k === 'End')  { go(slides.length - 1); }
+    else if (k === 'g' || k === 'G') { indexEl.classList.toggle('open'); }
+    else if (k === 'Escape') { closeIndex(); }
+    else if (k === 'f' || k === 'F') {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    }
+  });
+
+  document.getElementById('zoneNext').addEventListener('click', function () { go(i + 1); });
+  document.getElementById('zonePrev').addEventListener('click', function () { go(i - 1); });
+
+  var x0 = null;
+  stage.addEventListener('touchstart', function (e) { x0 = e.changedTouches[0].clientX; }, { passive: true });
+  stage.addEventListener('touchend', function (e) {
+    if (x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 45) go(dx < 0 ? i + 1 : i - 1);
+    x0 = null;
+  }, { passive: true });
+
+  var fromHash = parseInt((location.hash || '').slice(1), 10);
+  if (fromHash >= 1 && fromHash <= slides.length && fromHash !== 1) {
+    slides[0].classList.remove('is-active');
+    i = fromHash - 1;
+    slides[i].classList.add('is-active');
+  }
+
+  paint();
+})();
+</script>
+</body>
+</html>
