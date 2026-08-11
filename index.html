@@ -1,0 +1,1434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trendzo · Investor Deck</title>
+
+<style>
+/* TRENDZO · INVESTOR DECK
+   Design DNA lifted from consumer-app/src/theme/brutal.ts:
+     white ground, black ink, Helvetica Neue (Black for display),
+     zero corner radius, hairline #e6e6e6 rules, dim #666 support text,
+     green #0E8A45 as the single accent. No boxes, no borders, no shadows.
+   Stage is a fixed 1280x720 canvas scaled to the viewport, so every
+   slide is pixel-identical at any screen size and prints clean. */
+
+@font-face {
+  font-family: 'HelveticaNeue';
+  src: url('assets/fonts/HelveticaNeue-Regular.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: block;
+}
+@font-face {
+  font-family: 'HelveticaNeue';
+  src: url('assets/fonts/HelveticaNeue-Medium.ttf') format('truetype');
+  font-weight: 500; font-style: normal; font-display: block;
+}
+@font-face {
+  font-family: 'HelveticaNeue';
+  src: url('assets/fonts/HelveticaNeue-Bold.ttf') format('truetype');
+  font-weight: 700; font-style: normal; font-display: block;
+}
+@font-face {
+  font-family: 'HelveticaBlack';
+  src: url('assets/fonts/HelveticaNeueBlack.ttf') format('truetype');
+  font-weight: 900; font-style: normal; font-display: block;
+}
+
+:root {
+  --bg:       #FFFFFF;
+  --ink:      #000000;
+  --ink-soft: #1a1a1a;
+  --dim:      #666666;
+  --faint:    #bdbdbd;
+  --hairline: #e6e6e6;
+  --green:    #0E8A45;
+
+  --sans:  'HelveticaNeue', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --black: 'HelveticaBlack', 'HelveticaNeue', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  --pad-x: 84px;
+  --pad-y: 62px;
+
+  --fast: 180ms;
+  --base: 280ms;
+  --slow: 480ms;
+  --ease: cubic-bezier(.22,.61,.36,1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+/* Stage */
+#viewport {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+}
+#stage {
+  position: relative;
+  width: 1280px; height: 720px;
+  flex: 0 0 auto;
+  transform-origin: center center;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute; inset: 0;
+  padding: var(--pad-y) var(--pad-x);
+  display: flex; flex-direction: column;
+  background: var(--bg);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.slide.is-active { opacity: 1; visibility: visible; pointer-events: auto; }
+
+/* Entrance choreography 
+   Children marked [data-anim] rise and fade in sequence. Timing
+   follows the app's ANIM tokens (fast 180 / base 280 / slow 480). */
+.slide [data-anim] {
+  opacity: 0;
+  transform: translateY(14px);
+}
+.slide.is-active [data-anim] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--slow) var(--ease) calc(var(--i, 0) * 60ms + 60ms),
+    transform var(--slow) var(--ease) calc(var(--i, 0) * 60ms + 60ms);
+}
+/* Rules draw themselves open rather than fading */
+.slide [data-rule] { transform: scaleX(0); transform-origin: left center; }
+.slide.is-active [data-rule] {
+  transform: none;
+  transition: transform var(--slow) var(--ease) calc(var(--i, 0) * 60ms + 60ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide [data-anim], .slide [data-rule] { opacity: 1; transform: none; transition: none !important; }
+}
+
+/* Type scale */
+.kicker {
+  font-size: 11px; font-weight: 500; letter-spacing: 1.6px;
+  text-transform: uppercase; color: var(--dim);
+}
+.kicker .num { color: var(--ink); }
+
+h1.head {
+  font-family: var(--black);
+  font-size: 54px; line-height: 1.04; letter-spacing: -0.035em;
+  text-transform: uppercase; max-width: 780px;
+}
+h1.head.wide { max-width: 1010px; }
+
+.display {
+  font-family: var(--black);
+  font-size: 88px; line-height: 0.94; letter-spacing: -0.045em;
+  text-transform: uppercase;
+}
+
+.lead {
+  font-size: 19px; line-height: 1.55; font-weight: 400;
+  color: var(--ink-soft); max-width: 46ch;
+}
+.body {
+  font-size: 15px; line-height: 1.6; font-weight: 400; color: var(--dim);
+}
+.micro {
+  font-size: 11px; line-height: 1.5; font-weight: 400;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim);
+}
+.term {
+  font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink);
+}
+.green { color: var(--green); }
+
+.rule { height: 1px; background: var(--hairline); width: 100%; }
+
+/* Slide chrome */
+.slide-head { display: flex; align-items: baseline; justify-content: space-between; }
+/* Every slide starts its headline on the same baseline, so the deck reads as
+   one grid rather than fifteen individually centred compositions. Slack
+   collects at the bottom, which is where whitespace belongs here. */
+.slide-body { flex: 1; display: flex; flex-direction: column; padding-top: 52px; }
+.slide.closing .slide-body { justify-content: center; padding-top: 0; }
+.slide-foot { display: flex; align-items: center; gap: 14px; }
+
+/* Layout primitives */
+.stack-6  { display: flex; flex-direction: column; gap: 6px; }
+.stack-10 { display: flex; flex-direction: column; gap: 10px; }
+.stack-16 { display: flex; flex-direction: column; gap: 16px; }
+.stack-24 { display: flex; flex-direction: column; gap: 24px; }
+.stack-32 { display: flex; flex-direction: column; gap: 32px; }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+.split-46 { display: grid; grid-template-columns: 0.86fr 1fr; gap: 72px; align-items: start; }
+.cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; align-items: start; }
+.cols-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; align-items: start; }
+
+/* Numbered rows, separated by hairlines only */
+.rows { display: flex; flex-direction: column; }
+.row {
+  display: grid; grid-template-columns: 44px 1fr;
+  gap: 24px; padding: 20px 0;
+  border-top: 1px solid var(--hairline);
+}
+.row:last-child { border-bottom: 1px solid var(--hairline); }
+.row .idx {
+  font-family: var(--black); font-size: 13px; letter-spacing: 0;
+  color: var(--faint); padding-top: 3px;
+}
+.row .txt { display: flex; flex-direction: column; gap: 5px; }
+.row .txt .body { max-width: 700px; }
+
+/* Two-column row variant for tighter slides */
+.row.tight { padding: 15px 0; }
+
+/* Stat figures */
+.stats { display: flex; gap: 64px; align-items: flex-end; }
+.stat .fig {
+  font-family: var(--black); font-size: 52px; line-height: 1;
+  letter-spacing: -0.04em; color: var(--ink);
+}
+.stat .fig.small { font-size: 30px; letter-spacing: -0.03em; }
+.stat .lab { margin-top: 8px; }
+
+/* App screenshots. Shown as bare screens, no phone bezel and no frame, so
+   they sit on the white page the same way every other element does.
+   Source shots are 738x1600; at 232px wide that is 503px tall, and the
+   figure is shorter than that on purpose, so the Android status bar and the
+   gesture pill are cropped away rather than presented as part of the UI. */
+.screens { display: grid; grid-template-columns: 288px 1fr; gap: 56px; align-items: start; }
+.shots { display: flex; gap: 22px; align-items: flex-start; }
+.shot { display: flex; flex-direction: column; gap: 12px; width: 232px; }
+.shot .frame {
+  width: 232px; height: 485px; overflow: hidden; background: #f2f2f2;
+}
+/* Every shot lifts by the height of the Android status bar, so the clock and
+   the carrier icons are cropped off and the frame ends just below the app's
+   own tab bar, above the gesture pill. */
+.shot .frame img { width: 100%; display: block; margin-top: -18px; }
+.shot .cap { font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dim); }
+
+/* Insert / placeholder marker, kept visually quiet */
+.insert {
+  font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--faint); font-weight: 500;
+}
+
+/* Slide 1: cover */
+.cover { flex-direction: row; padding: 0; }
+.cover .left {
+  flex: 1; padding: var(--pad-y) var(--pad-x);
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.cover .art {
+  width: 452px; flex: 0 0 452px; position: relative; overflow: hidden;
+  background: #f2f2f2;
+}
+.cover .art img {
+  width: 100%; height: 100%; object-fit: cover;
+  transform: scale(1.22); filter: grayscale(1) contrast(1.06);
+}
+/* The wordmark PNG is 1200x189. `width: auto` plus `align-self` are load-
+   bearing: inside a flex COLUMN the default `align-items: stretch` pulls an
+   image to the full column width while its height stays put, which squashes
+   the mark. Both keep it at its true 6.35:1 ratio. */
+.wordmark {
+  height: 26px; width: auto; align-self: flex-start; flex: 0 0 auto;
+  filter: invert(1);
+}
+.wordmark.lg { height: 46px; }
+
+/* Closing */
+.closing .display { max-width: 15ch; }
+
+/* Progress: pixel blocks, echoing the app's tab indicator */
+#footbar {
+  position: absolute; left: var(--pad-x); bottom: 28px; z-index: 5;
+  display: flex; align-items: center; gap: 22px;
+}
+#progress { display: flex; gap: 4px; align-items: center; }
+#progress i {
+  width: 12px; height: 5px; background: var(--hairline);
+  display: block; transition: background var(--fast) linear, width var(--base) var(--ease);
+}
+#progress i.on { background: var(--ink); width: 22px; }
+
+#counter {
+  position: absolute; right: var(--pad-x); bottom: 26px; z-index: 5;
+  font-size: 11px; letter-spacing: 1.4px; color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+#counter b { color: var(--ink); font-weight: 500; }
+
+/* Click zones for prev/next */
+.nav-zone { position: absolute; top: 0; bottom: 56px; width: 30%; z-index: 4; cursor: pointer; }
+.nav-zone.prev { left: 0; }
+.nav-zone.next { right: 0; width: 70%; }
+
+/* Index overlay (press G) */
+#index {
+  position: absolute; inset: 0; z-index: 20; background: var(--bg);
+  padding: var(--pad-y) var(--pad-x);
+  display: none; flex-direction: column;
+}
+#index.open { display: flex; }
+#index .grid { margin-top: 26px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 56px; }
+#index button {
+  all: unset; cursor: pointer; display: grid; grid-template-columns: 30px 1fr;
+  gap: 14px; padding: 13px 0; border-top: 1px solid var(--hairline);
+  font-family: var(--sans);
+}
+#index button:last-child { border-bottom: 1px solid var(--hairline); }
+#index button .n { font-family: var(--black); font-size: 12px; color: var(--faint); }
+#index button .t { font-size: 14px; font-weight: 500; color: var(--ink-soft); letter-spacing: -0.01em; }
+#index button:hover .t { color: var(--ink); }
+#index button:hover .n { color: var(--ink); }
+#index button.cur .n { color: var(--green); }
+#index button.cur .t { color: var(--green); }
+
+/* Hint, parked beside the progress blocks so it always sits on white */
+#hint {
+  font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--faint);
+  transition: opacity var(--slow) linear;
+}
+#hint.gone { opacity: 0; }
+
+/* The cover carries no page number: the art panel runs to the right edge */
+.slide.cover.is-active ~ #counter { opacity: 0; }
+
+/* Print / PDF export */
+@page { size: 1280px 720px; margin: 0; }
+@media print {
+  html, body { overflow: visible; height: auto; }
+  #viewport { position: static; display: block; }
+  #stage { transform: none !important; width: 1280px; height: auto; overflow: visible; }
+  .slide {
+    position: relative; inset: auto;
+    width: 1280px; height: 720px;
+    opacity: 1 !important; visibility: visible !important;
+    page-break-after: always; break-after: page;
+  }
+  .slide [data-anim], .slide [data-rule] { opacity: 1 !important; transform: none !important; }
+  #footbar, #counter, #index, .nav-zone { display: none !important; }
+}
+</style>
+</head>
+
+<body>
+<div id="viewport">
+<div id="stage">
+
+  <!-- 01 · COVER -->
+  <section class="slide cover is-active">
+    <div class="left">
+      <div class="stack-24">
+        <img class="wordmark lg" src="assets/trendzo-logo.png" alt="Trendzo" data-anim style="--i:0" />
+        <div class="kicker" data-anim style="--i:1">Investor brief · Pre-launch</div>
+      </div>
+
+      <div class="stack-24">
+        <h2 class="display" data-anim style="--i:2">Try it<br />before<br />you buy it.</h2>
+        <p class="lead" data-anim style="--i:4">
+          Hyperlocal fashion from the stores around you. Try it on at your door,
+          or on your screen, before a rupee leaves your account.
+        </p>
+      </div>
+
+      <div class="stack-10" data-anim style="--i:5">
+        <div class="rule"></div>
+        <div class="slide-foot" style="justify-content:space-between; padding-top:6px">
+          <span class="micro">60 minute delivery · Indore pilot</span>
+          <span class="insert">[Presenter · email · date]</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="art" data-anim style="--i:1">
+      <img src="assets/login.webp" alt="" />
+    </div>
+  </section>
+
+  <!-- 02 · MARKET GAP — CONSUMERS -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">01</span> &nbsp;The problem · Consumers</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head" data-anim style="--i:1">Online fashion still asks you to buy blind.</h1>
+
+      <div class="rows">
+        <div class="row tight" data-anim style="--i:2">
+          <span class="idx">01</span>
+          <div class="txt">
+            <span class="term">Fit is a guess</span>
+            <span class="body">Nobody touches the fabric or checks the fit before paying.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:3">
+          <span class="idx">02</span>
+          <div class="txt">
+            <span class="term">Returns take days</span>
+            <span class="body">Money sits frozen on both sides while a reverse pickup happens.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:4">
+          <span class="idx">03</span>
+          <div class="txt">
+            <span class="term">Photos lie</span>
+            <span class="body">Studio shots and screen colors rarely match what shows up at the door.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:5">
+          <span class="idx">04</span>
+          <div class="txt">
+            <span class="term">Trust is the real tax</span>
+            <span class="body">Fashion's high return rates are a trust problem, not a shipping problem.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 · MARKET GAP — RETAILERS -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">02</span> &nbsp;The problem · Retailers</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head" data-anim style="--i:1">The stock exists. The storefront doesn't.</h1>
+
+      <div class="rows">
+        <div class="row tight" data-anim style="--i:2">
+          <span class="idx">01</span>
+          <div class="txt">
+            <span class="term">No storefront</span>
+            <span class="body">Millions of single-store retailers hold stock with no way to list it online.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:3">
+          <span class="idx">02</span>
+          <div class="txt">
+            <span class="term">Photography is a wall</span>
+            <span class="body">Studio-grade product shots are expensive and slow, so most never go digital.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:4">
+          <span class="idx">03</span>
+          <div class="txt">
+            <span class="term">Marketplaces aren't built for them</span>
+            <span class="body">Big platforms want full catalogs and dedicated ops, not a 200-SKU shop.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:5">
+          <span class="idx">04</span>
+          <div class="txt">
+            <span class="term">Cash flow bleeds</span>
+            <span class="body">Long payout cycles and high commissions make going online a net loss for a small store.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 · MARKET GAP — AGGREGATORS -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">03</span> &nbsp;The problem · Aggregators</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head" data-anim style="--i:1">Every platform solved half the problem.</h1>
+
+      <div class="rows">
+        <div class="row tight" data-anim style="--i:2">
+          <span class="idx">01</span>
+          <div class="txt">
+            <span class="term">Quick commerce solved speed, not certainty</span>
+            <span class="body">Blinkit, Zepto and Instamart proved fast delivery works, but speed alone can't fix fit.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:3">
+          <span class="idx">02</span>
+          <div class="txt">
+            <span class="term">Everyone defaults to warehouses</span>
+            <span class="body">The instinct is always owned inventory in a warehouse, capital-heavy and slow to open, while the stock already sits on shelves five minutes from the buyer.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:4">
+          <span class="idx">03</span>
+          <div class="txt">
+            <span class="term">Inventory nobody can trust</span>
+            <span class="body">Even platforms that plug into local stores show stock that's already sold, so orders fail after the customer has paid.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:5">
+          <span class="idx">04</span>
+          <div class="txt">
+            <span class="term">Nobody owns the "try" moment</span>
+            <span class="body">Every platform ships a box and hopes it fits. None put a person at the door to close the sale live.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 · HOW WE WORK — RETAILER DIAGNOSTIC -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">04</span> &nbsp;How we work · Retailer diagnostic</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head wide" data-anim style="--i:1">We asked retailers four questions before we built anything.</h1>
+
+      <div class="rows">
+        <div class="row tight" data-anim style="--i:2">
+          <span class="idx">01</span>
+          <div class="txt">
+            <span class="term">No real social presence</span>
+            <span class="body"><span class="green">55%</span> have no active social media account promoting the store.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:3">
+          <span class="idx">02</span>
+          <div class="txt">
+            <span class="term">Not selling online anywhere</span>
+            <span class="body"><span class="green">82%</span> have no listing on any platform and no website of their own.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:4">
+          <span class="idx">03</span>
+          <div class="txt">
+            <span class="term">Billing that doesn't talk to stock</span>
+            <span class="body"><span class="green">70%</span> run billing that isn't connected to their shelf inventory at all.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:5">
+          <span class="idx">04</span>
+          <div class="txt">
+            <span class="term">Tried, not bought, every single day</span>
+            <span class="body"><span class="green">65%</span> of what gets tried on in a day gets refolded and put back, never sold.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="insert" data-anim style="--i:6">[Illustrative · verify against actual retailer conversations before presenting]</div>
+    </div>
+  </section>
+
+  <!-- 06 · RETAILER APP FEATURES -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">04</span> &nbsp;How we work · The retailer app</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head wide" data-anim style="--i:1">From a phone photo to a live listing.</h1>
+
+      <div class="rows">
+        <div class="row tight" data-anim style="--i:2">
+          <span class="idx">01</span>
+          <div class="txt">
+            <span class="term">Photo in, mockup out</span>
+            <span class="body">Front and back shots, plus optional texture, monogram and label close-ups. The AI turns them into studio-grade photos in one step.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:3">
+          <span class="idx">02</span>
+          <div class="txt">
+            <span class="term">Bulk mode for a full rack</span>
+            <span class="body">A queue generates mockups for many products at once, so restocking the shelf doesn't mean a full day of photography.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:4">
+          <span class="idx">03</span>
+          <div class="txt">
+            <span class="term">One toggle, live everywhere</span>
+            <span class="body">Switching the store online makes every listed item visible in the shopper app instantly, priced, searchable and ready to sell.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:5">
+          <span class="idx">04</span>
+          <div class="txt">
+            <span class="term">Earnings, payouts and ops in one place</span>
+            <span class="body">The same app tracks what's owed and the next payout, and opens straight into the web portal for billing, orders and full operations.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 · RETAILER APP SCREENS -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">04</span> &nbsp;How we work · The retailer app</div>
+    </div>
+
+    <div class="slide-body">
+      <div class="screens">
+        <div class="stack-24">
+          <h1 class="head" data-anim style="--i:1; font-size:44px">Five minutes to go live.</h1>
+          <div class="stack-10" data-anim style="--i:2">
+            <span class="body">The exact flow a shopkeeper walks through: add photos, let the AI build the listing, flip the store online.</span>
+            <span class="micro" style="padding-top:8px">Captured on device · same build shown in full later</span>
+          </div>
+        </div>
+
+        <div class="shots">
+          <div class="shot" data-anim style="--i:2">
+            <div class="frame"><img src="assets/screens/retailer1.jpg" alt="Retailer storefront online toggle" /></div>
+            <span class="cap">Storefront · Online in one tap</span>
+          </div>
+          <div class="shot" data-anim style="--i:3">
+            <div class="frame"><img src="assets/screens/retailer3.jpg" alt="AI mockup capture step" /></div>
+            <span class="cap">AI catalog · One photo in</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 · THE THESIS -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">05</span> &nbsp;The thesis</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <div class="stack-16">
+        <h1 class="head wide" data-anim style="--i:1">Not just another ecommerce platform.</h1>
+        <p class="lead" data-anim style="--i:2; max-width:62ch">
+          We're solving several pain points for an entire market segment, not shipping one
+          product for one group.
+        </p>
+      </div>
+
+      <div class="rows">
+        <div class="row tight" data-anim style="--i:3">
+          <span class="idx">01</span>
+          <div class="txt">
+            <span class="term">Consumers get certainty</span>
+            <span class="body">The trust problem, solved: try before a rupee leaves the account, virtually or at the door.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:4">
+          <span class="idx">02</span>
+          <div class="txt">
+            <span class="term">Retailers get a digital front</span>
+            <span class="body">The invisibility problem, solved: storefront, AI catalog, synced stock and payouts they can trust.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:5">
+          <span class="idx">03</span>
+          <div class="txt">
+            <span class="term">The market gets what aggregators skipped</span>
+            <span class="body">Hyperlocal trial and real-time inventory, built as infrastructure, not a workaround.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack-10" data-anim style="--i:6">
+        <div class="rule"></div>
+        <span class="body" style="padding-top:4px">Three sides of one market, fixed by the same team, the same stack, the same pilot.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 · SOLUTION -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">06</span> &nbsp;The solution</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head" data-anim style="--i:1">Two ways to try before you pay.</h1>
+
+      <div class="split">
+        <div class="stack-16" data-anim style="--i:2">
+          <div class="stack-6">
+            <span class="term" style="font-size:22px">Virtual Try-On</span>
+            <span class="body">AI puts the garment on your own photo, before you order it.</span>
+          </div>
+        </div>
+        <div class="stack-16" data-anim style="--i:3">
+          <div class="stack-6">
+            <span class="term" style="font-size:22px">Try-and-Buy</span>
+            <span class="body">The agent waits at your door while you try. Keep what fits, hand back the rest. Prepaid, no cash.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack-10" data-anim style="--i:4">
+        <div class="rule"></div>
+        <span class="body" style="padding-top:4px">
+          No warehouses. No owned inventory. Every order routes to the nearest in-stock, open partner store.
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · CONSUMER APP -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">07</span> &nbsp;The app</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head wide" data-anim style="--i:1">Shopping that feels like scrolling.</h1>
+
+      <div class="split-46">
+        <div class="rows">
+          <div class="row tight" data-anim style="--i:2">
+            <span class="idx">01</span>
+            <div class="txt">
+              <span class="term">Reels-first discovery</span>
+              <span class="body">Swipe, tap, add to cart straight from the video.</span>
+            </div>
+          </div>
+          <div class="row tight" data-anim style="--i:3">
+            <span class="idx">02</span>
+            <div class="txt">
+              <span class="term">HER / HIM</span>
+              <span class="body">One toggle reshapes the catalog and the design language.</span>
+            </div>
+          </div>
+          <div class="row tight" data-anim style="--i:4">
+            <span class="idx">03</span>
+            <div class="txt">
+              <span class="term">One cart, many stores</span>
+              <span class="body">Split behind the scenes, shown as a single order.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack-32" style="padding-top:8px">
+          <div class="stat" data-anim style="--i:3">
+            <div class="fig">60 min</div>
+            <div class="lab micro">Delivery promise</div>
+          </div>
+          <div class="stat" data-anim style="--i:4">
+            <div class="fig">27</div>
+            <div class="lab micro">Screens shipped, backend wired</div>
+          </div>
+          <div class="stat" data-anim style="--i:5">
+            <div class="fig small">Wallet · Loyalty · GST</div>
+            <div class="lab micro">Full commerce stack, not mocked</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 · CONSUMER SCREENS -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">07</span> &nbsp;The app</div>
+    </div>
+
+    <div class="slide-body">
+      <div class="screens">
+        <div class="stack-24">
+          <h1 class="head" data-anim style="--i:1; font-size:44px">The shopper's app.</h1>
+          <div class="stack-10" data-anim style="--i:2">
+            <span class="body">Running on device today, not a mockup. React Native, wired to the live catalog.</span>
+          </div>
+        </div>
+
+        <div class="shots">
+          <div class="shot" data-anim style="--i:2">
+            <div class="frame"><img src="assets/screens/consumer1.jpg" alt="Trendzo home screen" /></div>
+            <span class="cap">Home · 60 minute promise</span>
+          </div>
+          <div class="shot" data-anim style="--i:3">
+            <div class="frame"><img src="assets/screens/consumer2.jpg" alt="Trending categories" /></div>
+            <span class="cap">Categories · HER and HIM</span>
+          </div>
+          <div class="shot" data-anim style="--i:4">
+            <div class="frame"><img src="assets/screens/consumer3.jpg" alt="Try and Buy and Explore" /></div>
+            <span class="cap">Try and Buy · Explore</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 · RETAILER -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">08</span> &nbsp;The retailer side</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head wide" data-anim style="--i:1">Turn any store into a quick-commerce seller.</h1>
+
+      <div class="rows">
+        <div class="row tight" data-anim style="--i:2">
+          <span class="idx">01</span>
+          <div class="txt">
+            <span class="term">One phone photo in, listing-ready images out</span>
+            <span class="body">AI removes the single biggest barrier to going digital: photography.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:3">
+          <span class="idx">02</span>
+          <div class="txt">
+            <span class="term">A free POS if they need one</span>
+            <span class="body">An item sold at the counter disappears from the app the same second.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:4">
+          <span class="idx">03</span>
+          <div class="txt">
+            <span class="term">Paid every two weeks, no minimum</span>
+            <span class="body">Fully itemized: gross, commission, TCS, refunds, holds, adjustments, net.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:5">
+          <span class="idx">04</span>
+          <div class="txt">
+            <span class="term">We fund 100% of the discounts</span>
+            <span class="body">Commission is charged pre-discount. The retailer earns as if there were none.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="micro" data-anim style="--i:6">68 retailer screens · roughly 19,800 lines of working code, already built</div>
+    </div>
+  </section>
+
+  <!-- 13 · RETAILER SCREENS -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">08</span> &nbsp;The retailer side</div>
+    </div>
+
+    <div class="slide-body">
+      <div class="screens">
+        <div class="stack-24">
+          <h1 class="head" data-anim style="--i:1; font-size:44px">The retailer's app.</h1>
+          <div class="stack-10" data-anim style="--i:2">
+            <span class="body">The in-store companion to the web dashboard. A shopkeeper photographs a garment and gets a listing.</span>
+            <span class="micro" style="padding-top:8px">Captured on device · seeded test store</span>
+          </div>
+        </div>
+
+        <div class="shots">
+          <div class="shot" data-anim style="--i:2">
+            <div class="frame"><img src="assets/screens/retailer1.jpg" alt="Retailer studio home" /></div>
+            <span class="cap">Studio · Online toggle</span>
+          </div>
+          <div class="shot" data-anim style="--i:3">
+            <div class="frame"><img src="assets/screens/retailer3.jpg" alt="AI mockup capture step" /></div>
+            <span class="cap">AI catalog · Photo capture</span>
+          </div>
+          <div class="shot" data-anim style="--i:4">
+            <div class="frame"><img src="assets/screens/retailer2.jpg" alt="Store profile and payouts" /></div>
+            <span class="cap">Store · Earnings and payouts</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14 · FLEET -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">09</span> &nbsp;Fleet operations</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head" data-anim style="--i:1">A fleet built for the door moment.</h1>
+
+      <div class="split-46">
+        <div class="rows">
+          <div class="row tight" data-anim style="--i:2">
+            <span class="idx">01</span>
+            <div class="txt">
+              <span class="term">Employed, not gig</span>
+              <span class="body">Auto-assigned by zone. No accept, no reject, no going offline.</span>
+            </div>
+          </div>
+          <div class="row tight" data-anim style="--i:3">
+            <span class="idx">02</span>
+            <div class="txt">
+              <span class="term">A countdown at the door</span>
+              <span class="body">Keep or return, item by item, with policy badges blocking invalid returns.</span>
+            </div>
+          </div>
+          <div class="row tight" data-anim style="--i:4">
+            <span class="idx">03</span>
+            <div class="txt">
+              <span class="term">Photo evidence, every decision</span>
+              <span class="body">Handover to the store is opened together, two parties, item by item.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack-32" style="padding-top:8px">
+          <div class="stats" data-anim style="--i:4; gap:44px">
+            <div class="stat"><div class="fig">3</div><div class="lab micro">Agents</div></div>
+            <div class="stat"><div class="fig">3</div><div class="lab micro">Zones</div></div>
+            <div class="stat"><div class="fig">20</div><div class="lab micro">Stores</div></div>
+          </div>
+          <div class="stack-10" data-anim style="--i:5">
+            <div class="rule"></div>
+            <span class="body" style="padding-top:4px">
+              Launch scale, deliberately small. The driver app is a complete build on mock data,
+              pending its dispatch wiring.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15 · DRIVER SCREENS -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">09</span> &nbsp;Fleet operations</div>
+    </div>
+
+    <div class="slide-body">
+      <div class="screens">
+        <div class="stack-24">
+          <h1 class="head" data-anim style="--i:1; font-size:44px">The agent's app.</h1>
+          <div class="stack-10" data-anim style="--i:2">
+            <span class="body">One tool replaces the WhatsApp group and the phone call. Queue, evidence, cash, all in one place.</span>
+            <span class="micro" style="padding-top:8px">Captured on device · figures are seeded test data</span>
+          </div>
+        </div>
+
+        <div class="shots">
+          <div class="shot" data-anim style="--i:2">
+            <div class="frame"><img src="assets/screens/driver1.jpg" alt="Agent home and earnings" /></div>
+            <span class="cap">Shift · Earnings and cash</span>
+          </div>
+          <div class="shot" data-anim style="--i:3">
+            <div class="frame"><img src="assets/screens/driver2.jpg" alt="Delivery queue" /></div>
+            <span class="cap">Queue · Live orders</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 16 · BUSINESS MODEL -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">10</span> &nbsp;Business model</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head wide" data-anim style="--i:1">Commission led. We fund the growth, not the store.</h1>
+
+      <div class="split-46">
+        <div class="stack-24">
+          <div data-anim style="--i:2">
+            <div class="display" style="font-size:104px">20%</div>
+            <div class="micro" style="margin-top:10px">Commission on pre-discount order value</div>
+          </div>
+          <div class="stack-10" data-anim style="--i:3">
+            <div class="rule"></div>
+            <span class="body" style="padding-top:4px; font-size:14px">
+              Net payout is order value, less commission, TCS, refunds and holds,
+              then adjusted either way.
+            </span>
+          </div>
+        </div>
+
+        <div class="rows" style="padding-top:4px">
+          <div class="row tight" data-anim style="--i:3">
+            <span class="idx">01</span>
+            <div class="txt">
+              <span class="term">Fortnightly payouts, no minimum</span>
+              <span class="body">The 14th and the last day of the month.</span>
+            </div>
+          </div>
+          <div class="row tight" data-anim style="--i:4">
+            <span class="idx">02</span>
+            <div class="txt">
+              <span class="term">TCS is pass-through</span>
+              <span class="body">Collected and remitted to the government. Never counted as revenue.</span>
+            </div>
+          </div>
+          <div class="row tight" data-anim style="--i:5">
+            <span class="idx">03</span>
+            <div class="txt">
+              <span class="term">Levers already architected</span>
+              <span class="body">Delivery and handling fees, promoted listings, a metered tier for AI catalog.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="insert" data-anim style="--i:6">[Insert · 3 to 5 year GMV, revenue and margin model]</div>
+    </div>
+  </section>
+
+  <!-- 17 · COMPLIANCE -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">11</span> &nbsp;Trust and compliance</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head" data-anim style="--i:1">The compliance is the moat.</h1>
+
+      <div class="rows">
+        <div class="row tight" data-anim style="--i:2">
+          <span class="idx">01</span>
+          <div class="txt">
+            <span class="term">Invoices are never edited</span>
+            <span class="body">Credit notes and supplementary invoices only, exactly as GST law requires.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:3">
+          <span class="idx">02</span>
+          <div class="txt">
+            <span class="term">KYC before a single rupee moves</span>
+            <span class="body">GSTIN portal check, PAN validation, bank penny-drop, annual re-verification.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:4">
+          <span class="idx">03</span>
+          <div class="txt">
+            <span class="term">Nothing is silently overwritten</span>
+            <span class="body">Every order, return, payout, stock move and price edit is a permanent event.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:5">
+          <span class="idx">04</span>
+          <div class="txt">
+            <span class="term">Humans decide, not algorithms</span>
+            <span class="body">A documented strike ladder with an Ops call before any suspension.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="micro" data-anim style="--i:6">
+        87 admin screens live today for KYC, disputes, payout runs, GST returns and reconciliation
+      </div>
+    </div>
+  </section>
+
+  <!-- 18 · BUILD STATUS -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">12</span> &nbsp;Build status</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head" data-anim style="--i:1">Pre-launch, not pre-product.</h1>
+
+      <div class="cols-4">
+        <div class="stat" data-anim style="--i:2"><div class="fig">437</div><div class="lab micro">Backend files</div></div>
+        <div class="stat" data-anim style="--i:3"><div class="fig">318</div><div class="lab micro">Dashboard files</div></div>
+        <div class="stat" data-anim style="--i:4"><div class="fig">41</div><div class="lab micro">Consumer app</div></div>
+        <div class="stat" data-anim style="--i:5"><div class="fig">19</div><div class="lab micro">Driver app</div></div>
+      </div>
+
+      <div class="rule" data-rule style="--i:5"></div>
+
+      <div class="split">
+        <div class="stack-6" data-anim style="--i:6">
+          <span class="micro" style="color:var(--green)">Live</span>
+          <span class="body">Catalog, pricing and tax engine, checkout, phone OTP, retailer and admin tooling, payout and GST math, AI try-on.</span>
+        </div>
+        <div class="stack-6" data-anim style="--i:7">
+          <span class="micro">Next</span>
+          <span class="body">Payment gateway, driver-app dispatch wiring, a real content pipeline for the reels feed.</span>
+        </div>
+      </div>
+
+      <div class="body" data-anim style="--i:8">
+        The unglamorous 80% of a marketplace, money, tax, disputes, inventory, multi-role auth, is built. What is left is connective tissue.
+      </div>
+    </div>
+  </section>
+
+  <!-- 19 · MARKET -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">13</span> &nbsp;Market</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head" data-anim style="--i:1">Three trends meeting in one place.</h1>
+
+      <div class="rows">
+        <div class="row tight" data-anim style="--i:2">
+          <span class="idx">01</span>
+          <div class="txt">
+            <span class="term">Speed is proven</span>
+            <span class="body">Quick commerce showed Indians will pay for it. Fashion is the category it has not solved.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:3">
+          <span class="idx">02</span>
+          <div class="txt">
+            <span class="term">Discovery moved to video</span>
+            <span class="body">Short video is how young India browses now, not search and filters.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:4">
+          <span class="idx">03</span>
+          <div class="txt">
+            <span class="term">The supply is already on the shelf</span>
+            <span class="body">Millions of single-store retailers hold real stock and have no storefront.</span>
+          </div>
+        </div>
+      </div>
+
+      <div data-anim style="--i:5">
+        <div class="slide-foot" style="justify-content:space-between; align-items:flex-end">
+          <div class="stats" style="gap:56px">
+            <div class="stat"><div class="fig">Indore</div><div class="lab micro">Beachhead city</div></div>
+            <div class="stat"><div class="fig">20</div><div class="lab micro">Partner stores</div></div>
+            <div class="stat"><div class="fig">3</div><div class="lab micro">Delivery zones</div></div>
+          </div>
+          <span class="insert">[Insert · TAM / SAM / SOM]</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 20 · DIFFERENTIATION -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">14</span> &nbsp;Why we win</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head" data-anim style="--i:1">Not a delivery app. Not a catalog.</h1>
+
+      <div class="rows">
+        <div class="row tight" data-anim style="--i:2">
+          <span class="idx">01</span>
+          <div class="txt">
+            <span class="term">Try-and-Buy is structural, not a feature</span>
+            <span class="body">It lives in checkout, in dispatch and in the refund engine.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:3">
+          <span class="idx">02</span>
+          <div class="txt">
+            <span class="term">Two try-before-you-pay mechanics</span>
+            <span class="body">Virtual for confidence while browsing, physical for the final call.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:4">
+          <span class="idx">03</span>
+          <div class="txt">
+            <span class="term">Asset light by design</span>
+            <span class="body">Nearest in-stock open store wins the order, not the highest bidder.</span>
+          </div>
+        </div>
+        <div class="row tight" data-anim style="--i:5">
+          <span class="idx">04</span>
+          <div class="txt">
+            <span class="term">India-first compliance depth</span>
+            <span class="body">GST, TCS, KYC, credit notes and audit trail are not one quarter of work.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="insert" data-anim style="--i:6">[Insert · named competitor comparison]</div>
+    </div>
+  </section>
+
+  <!-- 21 · GO TO MARKET -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">15</span> &nbsp;Go to market</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head wide" data-anim style="--i:1">One city. Twenty stores. Prove it, then repeat.</h1>
+
+      <div class="split-46">
+        <div class="rows">
+          <div class="row tight" data-anim style="--i:2">
+            <span class="idx">01</span>
+            <div class="txt">
+              <span class="term">Two to three hours on site, per retailer</span>
+              <span class="body">Inventory set up in person, owner and staff both trained.</span>
+            </div>
+          </div>
+          <div class="row tight" data-anim style="--i:3">
+            <span class="idx">02</span>
+            <div class="txt">
+              <span class="term">Both blockers removed up front</span>
+              <span class="body">The POS problem and the photography problem, solved on day one.</span>
+            </div>
+          </div>
+          <div class="row tight" data-anim style="--i:4">
+            <span class="idx">03</span>
+            <div class="txt">
+              <span class="term">Discounts are ours, and geo-fenced</span>
+              <span class="body">Never retailer funded, never spent outside the serviceable radius.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack-16" style="padding-top:8px" data-anim style="--i:5">
+          <span class="term" style="font-size:22px">Try-and-Buy is the wedge</span>
+          <span class="body">
+            A dedicated, capped trial discount exists for one reason: to get a first-time shopper
+            to experience the door-side try-on. That is the moment that converts the sceptics.
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 22 · ROADMAP -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">16</span> &nbsp;Roadmap</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head" data-anim style="--i:1">What ships next.</h1>
+
+      <div class="cols-3">
+        <div class="stack-16" data-anim style="--i:2">
+          <span class="micro" style="color:var(--ink)">Before launch</span>
+          <div class="stack-6">
+            <span class="body">Payment gateway integrated</span>
+            <span class="body">Driver app wired to live dispatch</span>
+            <span class="body">Real content pipeline for reels</span>
+            <span class="body">Commission and payout terms signed off</span>
+          </div>
+        </div>
+        <div class="stack-16" data-anim style="--i:3">
+          <span class="micro" style="color:var(--ink)">At launch</span>
+          <div class="stack-6">
+            <span class="body">Indore, 20 stores, 3 zones</span>
+            <span class="body">Admin-curated reels</span>
+            <span class="body">Simplified retailer delegation</span>
+            <span class="body">AI catalog free and unlimited</span>
+          </div>
+        </div>
+        <div class="stack-16" data-anim style="--i:4">
+          <span class="micro" style="color:var(--ink)">After</span>
+          <div class="stack-6">
+            <span class="body">City two and beyond</span>
+            <span class="body">Metered tier for AI catalog</span>
+            <span class="body">Promoted listings and placement</span>
+            <span class="body">Retailer and community reels</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="insert" data-anim style="--i:5">[Insert · city sequencing and timeline]</div>
+    </div>
+  </section>
+
+  <!-- 23 · THE ASK -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="kicker" data-anim style="--i:0"><span class="num">17</span> &nbsp;The ask</div>
+    </div>
+
+    <div class="slide-body stack-32">
+      <h1 class="head" data-anim style="--i:1">What this round buys.</h1>
+
+      <div class="split-46">
+        <div class="rows">
+          <div class="row tight" data-anim style="--i:2">
+            <span class="idx">01</span>
+            <div class="txt"><span class="term">Round</span><span class="insert">[Insert · pre-seed / seed]</span></div>
+          </div>
+          <div class="row tight" data-anim style="--i:3">
+            <span class="idx">02</span>
+            <div class="txt"><span class="term">Amount</span><span class="insert">[Insert · figure]</span></div>
+          </div>
+          <div class="row tight" data-anim style="--i:4">
+            <span class="idx">03</span>
+            <div class="txt"><span class="term">Runway</span><span class="insert">[Insert · months]</span></div>
+          </div>
+        </div>
+
+        <div class="stack-16" style="padding-top:8px" data-anim style="--i:5">
+          <span class="micro" style="color:var(--ink)">Where it goes</span>
+          <div class="stack-6">
+            <span class="body">Engineering: payments and dispatch to launch-ready</span>
+            <span class="body">Fleet and Indore operations</span>
+            <span class="body">Retailer acquisition and onboarding</span>
+            <span class="body">Working capital for the discount model</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 24 · CLOSING -->
+  <section class="slide closing">
+    <div class="slide-head">
+      <img class="wordmark" src="assets/trendzo-logo.png" alt="Trendzo" data-anim style="--i:0" />
+    </div>
+
+    <div class="slide-body stack-32">
+      <h2 class="display" data-anim style="--i:1">Fashion you can trust before you pay for it.</h2>
+      <p class="lead" data-anim style="--i:3; max-width:62ch">
+        Five working codebases. An India-compliant financial core. A pilot in Indore
+        that is designed to be repeated, city by city.
+      </p>
+    </div>
+
+    <div class="stack-10" data-anim style="--i:4">
+      <div class="rule"></div>
+      <div class="slide-foot" style="justify-content:space-between; padding-top:6px">
+        <span class="micro">Thank you</span>
+        <span class="insert">[Name · email · phone · website]</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chrome -->
+  <div class="nav-zone prev" id="zonePrev"></div>
+  <div class="nav-zone next" id="zoneNext"></div>
+  <div id="footbar">
+    <div id="progress"></div>
+    <div id="hint">Arrow keys to move · G for index · F for fullscreen</div>
+  </div>
+  <div id="counter"><b id="cur">01</b> / <span id="tot">24</span></div>
+
+  <div id="index">
+    <div class="kicker">Contents</div>
+    <div class="grid" id="indexGrid"></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+(function () {
+  var stage    = document.getElementById('stage');
+  var slides   = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var progress = document.getElementById('progress');
+  var curEl    = document.getElementById('cur');
+  var totEl    = document.getElementById('tot');
+  var hint     = document.getElementById('hint');
+  var indexEl  = document.getElementById('index');
+  var gridEl   = document.getElementById('indexGrid');
+
+  var TITLES = [
+    'Cover',
+    'The problem · Consumers', 'The problem · Retailers', 'The problem · Aggregators',
+    'How we work · Retailer diagnostic',
+    'How we work · The retailer app', 'How we work · The retailer app · screens',
+    'The thesis',
+    'The solution', 'The app', 'The app · screens',
+    'The retailer side', 'The retailer side · screens', 'Fleet operations',
+    'Fleet operations · screens', 'Business model', 'Trust and compliance',
+    'Build status', 'Market', 'Why we win', 'Go to market', 'Roadmap',
+    'The ask', 'Closing'
+  ];
+
+  var i = 0;
+
+  // Scale the 1280x720 stage to fill the viewport, preserving 16:9 exactly.
+  function fit() {
+    var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  // Pixel-block progress, echoing the home screen's tab indicator.
+  slides.forEach(function (_, n) {
+    var b = document.createElement('i');
+    b.addEventListener('click', function (e) { e.stopPropagation(); go(n); });
+    progress.appendChild(b);
+  });
+  var blocks = Array.prototype.slice.call(progress.children);
+  totEl.textContent = String(slides.length).padStart(2, '0');
+
+  // Index overlay
+  TITLES.forEach(function (t, n) {
+    var b = document.createElement('button');
+    b.innerHTML = '<span class="n">' + String(n + 1).padStart(2, '0') + '</span><span class="t">' + t + '</span>';
+    b.addEventListener('click', function () { go(n); closeIndex(); });
+    gridEl.appendChild(b);
+  });
+  var indexBtns = Array.prototype.slice.call(gridEl.children);
+
+  function go(n) {
+    if (n < 0 || n > slides.length - 1 || n === i) return;
+    slides[i].classList.remove('is-active');
+    i = n;
+    // Force a reflow so the entrance transitions replay on every visit.
+    void slides[i].offsetWidth;
+    slides[i].classList.add('is-active');
+    // Deep link, so a slide can be shared or reloaded into.
+    history.replaceState(null, '', '#' + (i + 1));
+    paint();
+  }
+
+  function paint() {
+    blocks.forEach(function (b, n) { b.classList.toggle('on', n === i); });
+    indexBtns.forEach(function (b, n) { b.classList.toggle('cur', n === i); });
+    curEl.textContent = String(i + 1).padStart(2, '0');
+    if (i > 0) hint.classList.add('gone');
+  }
+
+  function openIndex()  { indexEl.classList.add('open'); }
+  function closeIndex() { indexEl.classList.remove('open'); }
+
+  document.addEventListener('keydown', function (e) {
+    var k = e.key;
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === ' ' || k === 'PageDown') { e.preventDefault(); go(i + 1); }
+    else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp') { e.preventDefault(); go(i - 1); }
+    else if (k === 'Home') { go(0); }
+    else if (k === 'End')  { go(slides.length - 1); }
+    else if (k === 'g' || k === 'G') { indexEl.classList.toggle('open'); }
+    else if (k === 'Escape') { closeIndex(); }
+    else if (k === 'f' || k === 'F') {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    }
+  });
+
+  document.getElementById('zoneNext').addEventListener('click', function () { go(i + 1); });
+  document.getElementById('zonePrev').addEventListener('click', function () { go(i - 1); });
+
+  // Trackpad / touch swipe
+  var x0 = null;
+  stage.addEventListener('touchstart', function (e) { x0 = e.changedTouches[0].clientX; }, { passive: true });
+  stage.addEventListener('touchend', function (e) {
+    if (x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 45) go(dx < 0 ? i + 1 : i - 1);
+    x0 = null;
+  }, { passive: true });
+
+  // Open on the slide named in the hash (#7), if there is one.
+  var fromHash = parseInt((location.hash || '').slice(1), 10);
+  if (fromHash >= 1 && fromHash <= slides.length && fromHash !== 1) {
+    slides[0].classList.remove('is-active');
+    i = fromHash - 1;
+    slides[i].classList.add('is-active');
+  }
+
+  paint();
+})();
+</script>
+</body>
+</html>
